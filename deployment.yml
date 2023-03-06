@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ project_name }}"
+  labels:
+    app: "{{ project_name }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        app: "{{ project_name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ project_name }}"
+    spec:
+      containers:
+      - name: "{{ name }}"
+        image: "{{ image_id }}"
+        resources:
+          requests:
+            cpu: "{{ cpu }}"
+            memory: "{{ ram }}"
+        volumeMounts:
+        - name: pv-storage
+          mountPath: /mnt
+      - image: gitlab.dev.indrivo.com:5005/php-team/php-base-image:redis
+        imagePullPolicy: Always
+        name: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379
+          protocol: TCP     
+
+      volumes:
+      - name: pv-storage
+        persistentVolumeClaim:
+          claimName: "{{ name }}"
+      imagePullSecrets:
+      - name: registry-secret

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\GR.Core.Extension\GR.Core\GR.Core.csproj" />
+    <ProjectReference Include="..\GR.Crm.BussinesUnits.Abstractions\GR.Crm.BussinesUnits.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\GR.Core.Extension\GR.Core\GR.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\GR.Identity.Extension\GR.Identity.Permissions.Abstractions\GR.Identity.Permissions.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\GR.Identity.Extension\GR.Identity\GR.Identity.csproj" />
+    <ProjectReference Include="..\GR.Crm.Marketing.Abstractions\GR.Crm.Marketing.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

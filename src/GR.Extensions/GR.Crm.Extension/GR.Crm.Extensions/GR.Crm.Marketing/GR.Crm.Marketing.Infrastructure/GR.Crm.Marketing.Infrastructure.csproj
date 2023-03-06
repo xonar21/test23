@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GR.Crm.Marketing.Abstractions\GR.Crm.Marketing.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

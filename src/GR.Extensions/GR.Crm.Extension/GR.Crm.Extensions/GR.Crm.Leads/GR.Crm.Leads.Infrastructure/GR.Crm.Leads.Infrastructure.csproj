@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\GR.CloudStorage.Extension\GR.CloudStorage.Abstractions\GR.CloudStorage.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\GR.CloudStorage.Extension\GR.CloudStorage.Implementation\GR.CloudStorage.Implementation.csproj" />
+    <ProjectReference Include="..\..\..\..\GR.Email.Extension\GR.Email.Abstractions\GR.Email.Abstractions.csproj" />
+    <ProjectReference Include="..\..\GR.Crm.Contracts\GR.Crm.Contracts.Abstractions\GR.Crm.Contracts.Abstractions.csproj" />
+    <ProjectReference Include="..\GR.Crm.Leads.Abstractions\GR.Crm.Leads.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
