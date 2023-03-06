@@ -1,0 +1,625 @@
+@using GR.Core.Extensions;
+@using GR.Crm.Organizations.Abstractions.ViewModels.OrganizationsViewModels;
+@model GetOrganizationViewModel
+
+@{
+	ViewData["Title"] = Model.Name;
+}
+
+<OrgDetails />
+
+@section Scripts {
+	<script src="~/themes/gear/js/components/table/table.js"></script>
+	<script src="~/themes/gear/js/components/modal.js"></script>
+	<script src="~/themes/gear/js/components/textBlock.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/textarea.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/input.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/select.js"></script>
+	<script src="~/themes/gear/js/modalForms/editOrganizationModalForm.js"></script>
+	<script src="~/themes/gear/js/components/phone-input/addHideInput.js"></script>
+	<script src="~/themes/gear/js/components/phone-input/phone-input.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/primitiveTextArea.js"></script>
+	<script src="~/themes/gear/js/components/progressBar.js"></script>
+	<script src="~/themes/gear/js/components/audit.js"></script>
+	<script src="~/themes/gear/js/components/comment.js"></script>
+	<script src="~/themes/gear/js/components/commentCreate.js"></script>
+	<script src="~/themes/gear/js/components/commentsMain.js"></script>
+
+	<script type="text/x-template" id="page-template">
+		<div>
+			<ul class="nav nav-tabs content-header-tabs mx-0">
+				<li class="nav-item">
+					<a class="nav-link active" data-toggle="tab" href="#details-tab" role="tab" aria-controls="details-tab" aria-selected="true">@Localizer["details"]</a>
+				</li>
+			</ul>
+			<div class="tab-content" id="myTabContent">
+				<div class="tab-pane fade show active" id="details-tab">
+					<div class="row ml-10px mr-0">
+						<div class="col-lg-8">
+							<ProgressBar :stages="organizationStages"
+										 :stageIndex="stageIndex"
+										 :stageId="'@Model.StageId'" />
+							<div class="bg-white border rounded py-15 px-20">
+								<div class="d-flex">
+									<h6>@Localizer["details_overview"]</h6>
+								</div>
+								<hr class="hr-description">
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_org_industry"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.Industry?.Name</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_org_nr_employees"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.Employee?.Interval</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_date_of_founding"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.DateOfFounding?.Year</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_org_website"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.WebSite</p>
+									</div>
+								</div>
+								<h6 class="mt-3">@Localizer["details_contact_details"]</h6>
+								<hr class="hr-description">
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_phone"]</p>
+									</div>
+									@if (Model.Phone != null)
+									{
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">@Model.DialCode @Model.Phone</p>
+										</div>
+									}
+								</div>
+								<template v-for="email in orgObject.emailList">
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["details_email"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">{{email.email}}</p>
+										</div>
+									</div>
+								</template>
+								<template v-for="x in orgObject.addresses">
+									<hr class="hr-description mt-2">
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["system_country"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">{{ x.city?.crmCountry?.name}}</p>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["system_region"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">{{ x.rigion?.name }}</p>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["system_city"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">{{ x.city?.name }}</p>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["system_street"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">{{ x.street }}</p>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["system_zip"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">{{ x.zip }}</p>
+										</div>
+									</div>
+								</template>
+								<h6 class="mt-3">@Localizer["details_bank_details"]</h6>
+								<hr class="hr-description">
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_bank"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.Bank</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_iban_code"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.IBANCode</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_fiscal_code"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.FiscalCode</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">@Localizer["details_swift_code"]</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model?.CodSwift</p>
+									</div>
+								</div>
+								<h6 class="mt-3">Other</h6>
+								<hr class="hr-description" />
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">Stage</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model.Stage?.Name</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">Status</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model.State?.Name</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">Created by</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model.Author</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">Created at</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model.Created</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">Modified by</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model.ModifiedBy</p>
+									</div>
+								</div>
+								<div class="row no-gutters">
+									<div class="col-fixed-220">
+										<p class="p-sm mb-0">Modified at</p>
+									</div>
+									<div class="d-block mb-sm-0 mb-1">
+										<p class="p-sm mb-0 color-black">@Model.Changed</p>
+									</div>
+								</div>
+								@*<h6 class="mt-3">@Localizer["details_organization"]</h6>
+									<hr class="hr-description">
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">Organization stage</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">@Model.Stage.Name</p>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">Organization state</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">@Model.State?.Name</p>
+										</div>
+									</div>
+									<div class="row no-gutters">
+										<div class="col-fixed-220">
+											<p class="p-sm mb-0">@Localizer["details_org_status"]</p>
+										</div>
+										<div class="d-block mb-sm-0 mb-1">
+											<p v-if="orgObject.isDeleted" class="p-sm mb-0 color-black">Inactive</p>
+											<p v-else class="p-sm mb-0 color-black">Active</p>
+										</div>
+									</div>
+									<template v-for="x in orgObject.revenues">
+										<hr class="hr-description">
+										<div class="row no-gutters">
+											<div class="col-fixed-220">
+												<p class="p-sm mb-0">Year</p>
+											</div>
+											<div class="d-block mb-sm-0 mb-1">
+												<p class="p-sm mb-0 color-black">{{ x.year}}</p>
+											</div>
+										</div>
+										<div class="row no-gutters">
+											<div class="col-fixed-220">
+												<p class="p-sm mb-0">Amount</p>
+											</div>
+											<div class="d-block mb-sm-0 mb-1">
+												<p class="p-sm mb-0 color-black">{{ x.amount }} {{ x.currency?.symbol }}</p>
+											</div>
+										</div>
+									</template>
+									<h6 class="mt-3">@Localizer["details_description"]</h6>
+									<hr class="hr-description">
+									<div class="row no-gutters">
+										<div class="d-block mb-sm-0 mb-1">
+											<p class="p-sm mb-0 color-black">@Html.Raw(Model?.Description)</p>
+										</div>
+									</div>*@
+							</div>
+							<Leads />
+							<Contacts />
+						</div>
+						<div class="col-4">
+							<Comments />
+							<OrgAudit :organizationStages="organizationStages" />
+						</div>
+					</div>
+				</div>
+				<div class="tab-pane fade" id="leads-tab" role="tabpanel" aria-labelledby="profile-tab">
+				</div>
+				<div class="tab-pane fade" id="contacts-tab" role="tabpanel" aria-labelledby="contact-tab">
+				</div>
+			</div>
+			<EditOrganizationModalForm ref="modals" @@action="modalAction" />
+		</div>
+	</script>
+	<script type="text/x-template" id="leads-template">
+		<div class="bg-white border rounded py-15 px-20 mt-2">
+			<div class="d-flex"
+				 data-toggle="collapse"
+				 data-target="#leads"
+				 aria-expanded="false"
+				 aria-controls="leads">
+				<h6 class="mb-0">Opportunities</h6>
+				<i class="ml-auto comment__chevron"
+				   data-feather="chevron-down">
+				</i>
+			</div>
+			<div class="collapse" id="leads">
+				<Table :fields="tableFields"
+					   :apiUrl="apiUrl"
+					   :httpMethod="httpMethod"
+					   tableId="organizations-table"
+					   :sortOrder="tableConfig.sortCol"
+					   :initialPageSize="20"
+					   :reload="tableKey"
+					   :customQueryparams="{organizationId: orgId}"
+					   :hasCustomQUeryparams="true"
+					   :className="'table-px-0'"
+					   dataPath="result">
+					<slot slot="value" slot-scope="props">
+						{{ props.rowData.value }} {{ props.rowData.currency ? props.rowData.currency.symbol : '' }}
+					</slot>
+					<slot slot="pipeLine" slot-scope="props">
+						{{ props.rowData.pipeLine ? props.rowData.pipeLine.name : '' }}
+					</slot>
+					<slot slot="name" slot-scope="props">
+						<a :href="'/leads/details?id=' + props.rowData.id" @@click.stop>
+							{{ props.rowData.name }}
+						</a>
+					</slot>
+					<slot slot="leadMembers" slot-scope="props">
+						<a v-if="props.rowData.leadMembers"
+						   class="btn btn-outline-primary user-rectangle"
+						   href="#"
+						   @@click.stop.prevent
+						   :title="extractTeamOwnerName(props.rowData.leadMembers).fullName">
+							{{ props.rowData.leadMembers ? extractTeamOwnerName(props.rowData.leadMembers).initials : '' }}
+						</a>
+					</slot>
+					<slot slot="stage" slot-scope="props">
+						{{ props.rowData.stage ? props.rowData.stage.name : ''}}
+					</slot>
+				</Table>
+			</div>
+		</div>
+	</script>
+	<script type="text/x-template" id="contacts-template">
+		<div class="bg-white border rounded py-15 px-20 mt-2">
+			<div class="d-flex"
+				 data-toggle="collapse"
+				 data-target="#contacts"
+				 aria-expanded="false"
+				 aria-controls="contacts">
+				<h6 class="mb-0">Contacts</h6>
+				<i class="ml-auto comment__chevron"
+				   data-feather="chevron-down">
+				</i>
+			</div>
+			<div class="collapse" id="contacts">
+				<Table :fields="tableFields"
+					   :apiUrl="apiUrl"
+					   :httpMethod="httpMethod"
+					   @@triggeredMenuAction="action"
+					   tableId="organizations-table"
+					   :sortOrder="tableConfig.sortCol"
+					   :initialPageSize="20"
+					   :reload="tableKey"
+					   :customQueryparams="{organizationId: orgId, includeDeleted: true}"
+					   :hasCustomQUeryparams="true"
+					   dataPath="result"
+					   :className="'table-px-0'"
+					   :draggableRows="false"
+					   :draggableOptions="{}">
+					<slot slot="jobPosition" slot-scope="props">
+						{{ props.rowData.jobPosition ? props.rowData.jobPosition.name : '' }}
+					</slot>
+					<slot slot="firstName" slot-scope="props">
+						<a :href="'/contact/details?id=' + props.rowData.id" @@click.stop>
+							{{ props.rowData.firstName }} {{ props.rowData.lastName }}
+						</a>
+					</slot>
+				</Table>
+			</div>
+		</div>
+	</script>
+	<script type="text/x-template" id="audit-template">
+		<Audit :pageRequest="pageRequest"
+			   :stages="organizationStages"
+			   @@incrementPage="incrementPage" />
+	</script>
+	<script type="text/x-template" id="comments-template">
+		<CommentsMain :apiUrl="apiUrl"
+					  :entityField="entityField"
+					  :entityId="entityId" />
+	</script>
+	<script>
+		const orgObject = JSON.parse('@Html.Raw(Model.SerializeAsJson().Replace("\\t" , "").Replace("\\\"", "\\\\\\\""))');
+		Vue.component('Leads', {
+			template: '#leads-template',
+			data() {
+				return {
+					orgId: orgObject.id,
+					apiUrl: apiEndpoints.Leads.GetPaginatedLeadsByOrganizationId,
+					httpMethod: 'get',
+					tableFields: [
+						{
+							name: 'name',
+							title: 'Name',
+							sortField: 'name',
+							visible: true
+						},
+						{
+							name: 'value',
+							title: 'Value',
+							sortField: 'value',
+							visible: true
+						},
+						{
+							name: 'pipeLine',
+							title: 'Pipeline',
+							visible: true
+						},
+						{
+							name: 'stage',
+							title: 'Stage',
+							visible: true
+						},
+						{
+							name: 'leadMembers',
+							title: 'Owner',
+							visible: true,
+							dataClass: 'td-users'
+						},
+						{
+							name: 'isDeleted',
+							title: 'Status',
+							sortField: 'isDeleted',
+							visible: true
+						},
+						{
+							name: 'dueDate',
+							title: 'Due date',
+							sortField: 'dueDate',
+							visible: true
+						}
+					],
+					tableConfig: {
+						currentPage: 0,
+						pageSize: 10,
+						rowCount: 0,
+						sortCol: [
+							{
+								field: 'name',
+								sortField: 'name',
+								direction: 'asc'
+							}
+						]
+					},
+					tableKey: 0,
+					defaultOwnerRoleId: '11447a80-eff9-4f68-b24f-353ab2d5ee92'
+				}
+			},
+			methods: {
+				extractTeamOwnerName(team) {
+					let owner = this.findObjectByPropValue(team, this.defaultOwnerRoleId, 'teamRoleId');
+					let teamOwnerName = {
+						initials: '',
+						fullName: '',
+					}
+					if (owner) {
+						teamOwnerName = {
+							initials: this.initials(owner.firstName, owner.lastName),
+							fullName: `${owner.firstName} ${owner.lastName}`
+						}
+					}
+					return teamOwnerName;
+				},
+				initials(name, surname) {
+					return name && surname ? `${name.charAt(0)} ${surname.charAt(0)}` : 'UP';
+				},
+				action(action) {
+					if (action.key == 'delete') {
+						this.deleteOrganizations(action.value);
+					} else if (action.key == 'edit') {
+					}
+				},
+				findObjectByPropValue(array, value, prop) {
+					return array.find(x => x[prop] === value);
+				}
+			}
+		});
+		Vue.component('Contacts', {
+			template: '#contacts-template',
+			data() {
+				return {
+					orgId: orgObject.id,
+					apiUrl: apiEndpoints.Contact.GetContactByOrganizationId,
+					httpMethod: 'get',
+					tableFields: [
+						{
+							name: 'firstName',
+							title: 'First name',
+							visible: true
+						},
+						{
+							name: 'email',
+							title: 'Email',
+							visible: true
+						},
+						{
+							name: 'phone',
+							title: 'Phone',
+							visible: true
+						},
+						{
+							name: 'jobPosition',
+							title: 'Job position',
+							visible: true
+						}
+					],
+					tableConfig: {
+						currentPage: 0,
+						pageSize: 10,
+						rowCount: 0,
+						sortCol: [
+							{
+								field: 'name',
+								sortField: 'name',
+								direction: 'asc'
+							}
+						]
+					},
+					tableKey: 0
+				}
+			},
+			methods: {
+				action(action) {
+					if (action.key == 'deactivate') {
+						this.deleteOrganizations(action.value);
+					} else if (action.key == 'edit') {
+					}
+				}
+			}
+		});
+		Vue.component('OrgDetails', {
+			template: '#page-template',
+			data() {
+				return {
+					orgObject
+				}
+			},
+			beforeCreate() {
+				const breadcrumbs = [
+					'Clients',
+					`<a href="/organizations">Organizations</a>`,
+					`@Model?.Name`
+				]
+				this.$store.dispatch("setCustomBreadcrumbsAction", breadcrumbs);
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			created() {
+				this.$store.dispatch('getAllOrganizationStages');
+				this.$store.dispatch('getAllPhoneLabels');
+			},
+			computed: {
+				organizationStages() {
+					return this.$store.state.allOrganizationStages || [];
+				},
+				stageIndex() {
+					return this.organizationStages.length
+						? this.organizationStages.findIndex(x => x.value == '@Model.StageId')
+						: -1;
+				}
+			},
+			methods: {
+				openModal() {
+					this.$refs['modals'].editOrganization('@Model?.Id');
+				},
+				modalAction() {
+					location.reload();
+				}
+			}
+		});
+		Vue.component('OrgAudit', {
+			template: "#audit-template",
+			data() {
+				return {
+					pageRequest: {
+						includeDeleted: true,
+						page: 1,
+						pageSize: 50,
+						recordId: '@Model.Id'
+					},
+				}
+			},
+			props: {
+				organizationStages: Array
+			},
+			methods: {
+				incrementPage() {
+					this.pageRequest.page++;
+				}
+			},
+		});
+		Vue.component('Comments', {
+			template: '#comments-template',
+			data() {
+				return {
+					apiUrl: apiEndpoints.Comments.GetAllCommentsByOrganizationId,
+					entityField: 'organizationId',
+					entityId: '@Model.Id'
+				}
+			}
+		});
+	</script>
+}

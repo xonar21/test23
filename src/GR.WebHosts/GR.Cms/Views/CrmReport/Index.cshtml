@@ -1,0 +1,578 @@
+@{
+	ViewData["Title"] = "Report " + Html.ViewBag.Type;
+}
+@section Styles {
+	<style>
+		.reports-indicator,
+		.reports-incator-label {
+			width: 180px;
+		}
+
+		.report {
+			position: relative;
+		}
+
+		.groupedByLabels-item {
+			font-size: 16px;
+			font-weight: 600;
+		}
+
+			.groupedByLabels-item:last-child {
+				margin-left: 3px;
+			}
+
+				.groupedByLabels-item:last-child .groupByDelimiter {
+					display: none;
+				}
+
+		.reports-incator-label {
+			color: #808890;
+			line-height: 1;
+		}
+
+		.download-report-action {
+			position: absolute;
+			right: 2%;
+		}
+		.vertical-dots {
+			width: 3px;
+			height: 3px;
+			border-radius: 50%;
+			background-color: black;
+			box-shadow: 0px 4px 0px black, 0px 8px 0px black;
+		}
+
+	</style>
+}
+
+<Report/>
+
+@section Scripts {
+	<script src="~/themes/gear/js/components/pageOptionsbar.js"></script>
+	<script>
+		Vue.filter('numberWithCommas', x => {
+			return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		});
+	</script>
+	<script id="report-template" type="text/x-template">
+		<div>
+			<PageOptionsBar v-if="filtersLoaded"
+							:pageOptionsComponents="pageOptionsComponents"
+							:filters="tableFilters"
+							:groupBy="groupByList"
+							@@filterResult="filterResult"
+							@@groupResult="groupResult"
+							ref="pageOptions" />
+			<hr />
+			<div class="container-fluid">
+			<div class="row">
+				<div class="col-12 col-lg-8 position-relative" style="min-height: 400px">
+					<div v-show="!dataLoaded" class="section-loader"><Loader/></div>
+					<transition name="fade">
+						<div v-if="dataLoaded" class="ml-5px card py-15px px-20 report">
+							<div v-if="'@ViewBag.Type' == 'leads'">
+								&nbsp;
+								<a href="#" class="download-report-action" data-toggle="dropdown">
+									<svg xmlns="http://www.w3.org/2000/svg" width="15" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-vertical"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+								</a>
+								<div class="dropdown-menu">
+									<a class="dropdown-item" @@click="downloadCSV" href="#">.csv</a>
+									<a class="dropdown-item" @@click="downloadXLSX" href="#">.xlsx</a>
+								</div>
+							</div>
+							<div v-for="(repDataItem, i) in reportData" :key="'reportDataItem-' + i">
+								<div class="groupedByLabels d-flex" :class="{'mt-20px' : i != 0}">
+									<template v-for="(repGroup, name, index) in repDataItem.groupKeys">
+										<div v-if="repGroup" :key="'groupKey' + index" class="groupedByLabels-item">
+											{{repGroup}}
+											<span class="groupByDelimiter">/</span>
+										</div>
+									</template>
+								</div>
+								<hr class="my-10px" />
+								<div class="reports-indices-labels d-flex">
+									<div v-for="(repInd, index) in config.fields" :key="'reportDataItemProp-' + index">
+										<div class="reports-incator-label" :class="'indicator-'+ index">
+											{{ repInd.label }}
+										</div>
+									</div>
+								</div>
+								<hr class="my-10px" />
+								<div class="reports-indices-indices d-flex">
+									<div v-for="(repInd, index) in config.fields" :key="'reportDataItemProp-' + index">
+										<div class="reports-indicator" :class="'indicator-'+ index">
+											<template v-if="repInd.formatter">
+												{{ repInd.formatter(repDataItem[repInd.id]) }}
+											</template>
+											<template v-else>
+												{{ repDataItem[repInd.id] }}
+											</template>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</transition>
+				</div>
+			</div>
+		</div>
+		</div>
+	</script>
+	<script>
+		const reportConfig = {
+			leads: {
+				api: apiEndpoints.CrmReport.LeadReport,
+				filters: [
+					{
+						id: 'LeadStateId',
+						label: 'Lead status',
+						api: apiEndpoints.Leads.GetAllLeadStates,
+						requestType: 'get',
+						textProp: 'name',
+						valProp: 'id'
+					},
+					{
+						id: 'Owner',
+						label: 'Owner',//t('details_owner'),
+						api: apiEndpoints.Users.GetUsers,
+						//values: $store.state.allUsers,
+						requestType: 'get',
+						textProp: 'email',
+						valProp: 'id'
+					},
+					{
+						id: 'PipeLineId',
+						label: 'Pipeline',//t('details_pipeline'),
+						api: apiEndpoints.PipeLines.GetAll,
+						requestType: 'get',
+						textProp: 'name',
+						valProp: 'id'
+					},
+					{
+						id: 'period',
+						label: 'Period', //t('system_gr_period'),
+						idStartDate: 'StartDate',
+						idEndDate: 'EndDate',
+						isDateRange: true,
+						values: [
+							{
+								active: false,
+								label: 'Start date',//t('system_calendar_event_start_date'),
+								value: 'Start date'
+							},
+							{
+								active: false,
+								label: 'End date',//t('system_calendar_event_end_date'),
+								value: 'End date'
+							}
+						]
+					}
+				],
+				groupBy: [
+					{
+						id: 'Stage',
+						label: 'Stage', //t('details_stage')
+					},
+					{
+						id: 'PipeLine',
+						label: 'PipeLine',//t('details_pipeline')
+					},
+					{
+						id: 'Owner',
+						label: 'Owner',//t('details_owner')
+					}@*,
+					{
+						id: 'Data',
+						label: 'Data'
+					}*@
+				],
+				fields: [
+					{
+						id: 'count',
+						label: 'Lead count'
+					},
+					{
+						id: 'sumValue',
+						label: 'Total sum',
+						formatter: val => `${val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${'@ViewBag.Currency'}`
+					}
+				]
+			},
+			tasks: {
+				api: apiEndpoints.CrmReport.TaskReport,
+				filters: [
+					{
+						id: 'Agent',
+						label: 'Agent',
+						api: apiEndpoints.Users.GetUsers,
+						//value: this.getUsers,
+						requestType: 'get',
+						textProp: 'email',
+						valProp: 'id'
+					},
+					{
+						id: 'Priority',
+						label: 'Priority',//t('details_priority'),
+						api: apiEndpoints.TaskManager.GetTaskPriorityList,
+						requestType: 'get',
+						textProp: 'text',
+						valProp: 'value'
+					},
+					{
+						id: 'Status',
+						label: 'Status',
+						api: apiEndpoints.TaskManager.GetTaskStatusList,
+						requestType: 'get',
+						textProp: 'text',
+						valProp: 'value'
+					},
+					{
+						id: 'period',
+						label: 'Period',//t('system_gr_period'),
+						idStartDate: 'StartDate',
+						idEndDate: 'EndDate',
+						isDateRange: true,
+						values: []
+					}
+				],
+				groupBy: [
+					{
+						id:'Status',
+						label:'Status'
+					},
+					{
+						id:'Priority',
+						label: 'Priority',//t('details_priority')
+					},
+					{
+						id: 'Data',
+						label: 'Data'
+					},
+					{
+						id: 'Lead',
+						label: 'Lead'
+					},
+					{
+						id: 'Agreement',
+						label: 'Agreement'
+					}
+
+				],
+				fields: [
+					{
+						id: 'count',
+						label: 'Tasks count'
+					}
+				]
+			},
+			agreements: {
+				api: apiEndpoints.CrmReport.AgreementsReport,
+				filters: [
+					{
+						id: 'Agent',
+						label: 'Agent',
+						api: apiEndpoints.Users.GetUsers,
+						//value: this.getUsers,
+						requestType: 'get',
+						textProp: 'email',
+						valProp: 'id'
+					},
+					{
+						id: 'period',
+						label: 'Period', //t('system_gr_period'),
+						idStartDate: 'StartDate',
+						idEndDate: 'EndDate',
+						isDateRange: true,
+						values: []
+					}
+				],
+				groupBy: [
+					{
+						id: 'Agent',
+						label: 'Agent',
+					},
+					{
+						id: 'Data',
+						label: 'Data'
+					}
+				],
+				fields: [
+					{
+						id: 'count',
+						label: 'Agreements count'
+					},
+					{
+						id: 'sumValue',
+						label: 'Total sum',
+						formatter: val => `${val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${'@ViewBag.Currency'}`
+					}
+				]
+			},
+			payments: {
+				api: apiEndpoints.CrmReport.PaymentsReport,
+				filters: [
+					{
+						id: 'period',
+						label: 'Period', //t('system_gr_period'),
+						idStartDate: 'StartDate',
+						idEndDate: 'EndDate',
+						isDateRange: true,
+						values: []
+					},
+					{
+						id: 'OrganizationId',
+						label: 'Organization',//t('organization'),
+						api: apiEndpoints.Organization.GetAllOrganization,
+						//value: this.getOrganizations,
+						requestType: 'get',
+						textProp: 'name',
+						valProp: 'id'
+					}
+				],
+				groupBy: [
+					{
+						id: 'Data',
+						label: 'Data'
+					},
+					{
+						id: 'Organization',
+						label: 'Organization',//t('organization')
+					}
+				],
+				fields: [
+					{
+						id: 'count',
+						label: 'Payments count'
+					},
+					{
+						id: 'sumQuantity',
+						label: 'Quantity sum'
+					}
+				]
+			}
+		}
+		const utils = {
+			convertArrayToFilterList: (array, valProp, textProp, textProp2 = null, activeItems = []) => {
+				return array.map(e => {
+					const newObj = {
+						label: textProp2 ? `${e[textProp]} ${e[textProp2]}` : e[textProp],
+						value: e[valProp],
+						active: activeItems.includes(e[valProp])
+					}
+					return newObj;
+				});
+			},
+			convertArrayToSelectList(array) {
+				return array.map(e => {
+					const newObj = {
+						label: e.name,
+						value: e.id
+					}
+					return newObj;
+				});
+			}
+		}
+
+		Vue.component('Report', {
+			template: '#report-template',
+			data() {
+
+				return {
+					config: Object.assign({}, reportConfig['@ViewBag.Type']),
+					pageOptionsComponents: [],
+					pageRequestFilters: this.getPreselectedFilters(),
+					pageGroupValues: this.getPreselectedGroupBy(),
+					dataTableFilters: [],
+					filtersLoaded: false,
+					reportData: [],
+					dataLoaded: false
+				}
+			},
+			computed: {
+				getOrganizations() {
+					return this.$store.state.allOrganizations;
+				},
+				getUsers() {
+					console.log(this.$store.state.allUsers);
+					return this.$store.state.allUsers;
+				},
+				getLeads() {
+					return this.convertArrayToSelectList(this.$store.state.allLeads);
+				},
+				tableFilters() {
+					return this.dataTableFilters.length > 0 ? this.dataTableFilters : null;
+				},
+				groupByList() {
+					return this.config.groupBy;
+				},
+				geoupByActiveCount() {
+					let count = 0;
+					if (this.reportData.length > 0) {
+						for (rk in this.reportData[0].groupKeys) {
+							if (rk) {
+								count++;
+							}
+						}
+					}
+					return count;
+				},
+				groupByCount() {
+					let count = 0;
+					if (this.reportData.length > 0) {
+						for (rk in this.reportData[0].groupKeys) {
+							count++;
+						}
+					}
+					return count;
+				}
+			},
+			created() {
+				this.$store.dispatch('getAllLeads');
+				this.$store.dispatch('getAllUsers');
+				this.$store.dispatch('getAllOrganizations');
+				let promises = [];
+				this.config.filters.forEach((filter, i, a) => {
+					if (filter.api) {
+						promises.push(customAjaxRequest(filter.api, filter.requestType));
+					} else {
+						this.dataTableFilters.push(filter);
+					}
+				});
+				Promise.all(promises).then(results => {
+					let i = 0;
+					this.config.filters.forEach(filter => {
+						if (filter.api) {
+							const convertedArray = utils.convertArrayToFilterList(results[i], filter.valProp, filter.textProp, filter.textProp2);
+							const copyFilter = filter;
+							copyFilter.values = convertedArray;
+							this.dataTableFilters.push(copyFilter);
+							i++;
+						}
+					});
+					this.filtersLoaded = true;
+					this.pageRequestFilters.forEach(f => {
+						const targetFilter = this.dataTableFilters.find(df => df.id === f.Propriety);
+						if (targetFilter) {
+							const targetValue = targetFilter.values.find(tv => tv.value === f.Value);
+							targetValue.active = true;
+						}
+					});
+					this.$nextTick(function() {
+						if (this.pageGroupValues.length > 0) {
+							this.$refs.pageOptions.$refs.filters.$refs.groupBy.dataInputValue = this.pageGroupValues;
+						}
+					});
+					this.getReportData();
+				});
+			},
+			methods: {
+				filterResult(val) {
+					this.pageRequestFilters = [];
+					val.forEach(f => {
+						f.values.forEach(v => {
+							if (v.active) {
+								let fValue = v.value;
+								this.pageRequestFilters.push({
+									Propriety: f.id,
+									Value: fValue
+								});
+							}
+						});
+					});
+				},
+				groupResult(val) {
+					this.pageGroupValues = val;
+				},
+				getReportData() {
+					this.dataLoaded = false;
+					customAjaxRequest(this.config.api, 'POST', { filters: this.pageRequestFilters, listGroupProperties: this.pageGroupValues }).then(result => {
+						this.reportData = result;
+						this.dataLoaded = true;
+					});
+				},
+				getPreselectedFilters() {
+					return this.getProprietes('filter');
+				},
+				getPreselectedGroupBy() {
+					return this.getProprietes('groupBy');
+				},
+				getProprietes(type) {
+					const url_string = window.location.href;
+					const url = new URL(url_string);
+					let params = [];
+					for (const [Propriety, Value] of url.searchParams.entries()) {
+						if (type === 'filter') {
+							const filter = reportConfig['@ViewBag.Type'].filters.find(f => f.id === Propriety);
+							if (filter) {
+								params.push({ Propriety, Value });
+							}
+						} else {
+							const groupBy = reportConfig['@ViewBag.Type'].groupBy.find(gb => gb.id === Value);
+							if (groupBy) {
+								params.push(groupBy.id);
+							}
+						}
+					}
+					return params;
+				},
+				downloadXLSX() {
+					let arr = [];
+					this.reportData.forEach((lead, i, a) => {
+						arr.push({
+							"sumNumberOfUnits": lead.sumNumberOfUnits,
+							"sumValue": lead.sumValue,
+							"sverageCommission": lead.averageCommission,
+							"id": lead.id,
+						})
+					});
+
+					let promise = [customAjaxRequest(apiEndpoints.CrmReport.DownloadLeadXLS, 'POST', JSON.stringify(arr), true)];
+					Promise.all(promise).then(result => {
+						if (result) {
+							window.open(`${window.location.origin}${apiEndpoints.CrmReport.GetXLXByID}?Id=${result[0]}`, '_blank');
+						}
+					});
+				},
+				downloadCSV() {
+					let arr = [];
+					this.reportData.forEach((lead, i, a) => {
+						arr.push({
+							"sumNumberOfUnits": lead.sumNumberOfUnits,
+							"sumValue": lead.sumValue,
+							"sverageCommission": lead.averageCommission,
+							"id": lead.id,
+						})
+					});
+					let promise = [customAjaxRequest(apiEndpoints.CrmReport.DownloadLeadCSV, 'POST', JSON.stringify(arr), true)];
+					Promise.all(promise).then(result => {
+						if (result) {
+							result[0].fileContents = atob(result[0].fileContents);
+							this.download(result[0]);
+						}
+						this.download(result[0]);
+					});
+				},
+				download(file) {
+					var blob = new Blob([file.fileContents], { type: file.contenType });
+					var elem = window.document.createElement('a');
+					elem.href = window.URL.createObjectURL(blob);
+					elem.download = file.fileDownloadName;
+					document.body.appendChild(elem);
+					elem.click();
+					document.body.removeChild(elem);
+				},
+			},
+			watch: {
+				pageRequestFilters: {
+					deep: true,
+					handler() {
+						this.getReportData();
+					}
+				},
+				pageGroupValues() {
+					this.getReportData();
+				}
+			}
+		});
+	</script>
+}

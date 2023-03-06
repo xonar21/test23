@@ -1,0 +1,604 @@
+@using GR.Crm.Products.Abstractions.ViewModels.ProductsViewModels;
+@model GetProductViewModel
+
+@{
+	ViewData["Title"] = Model.Name;
+}
+<ProductDetails />
+@section Scripts {
+	<script src="~/themes/gear/js/components/pageOptionsbar.js"></script>
+	<script src="~/themes/gear/js/components/table/table.js"></script>
+	<script src="~/themes/gear/js/components/modal.js"></script>
+	<script src="~/themes/gear/js/components/textBlock.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/textarea.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/input.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/select.js"></script>
+	<script src="~/themes/gear/js/modalForms/editProductModalForm.js"></script>
+
+	<script type="text/x-template" id="page-template">
+		<div>
+			<ul class="nav nav-tabs content-header-tabs ml-40px mr-0">
+				<li class="nav-item">
+					<a class="nav-link active" data-toggle="tab" href="#details-tab" role="tab" aria-controls="details-tab" aria-selected="false">@Localizer["details"]</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" data-toggle="tab" href="#variations-tab" role="tab" aria-controls="variations-tab" aria-selected="true">Variations</a>
+				</li>
+			</ul>
+			<div class="tab-content" id="myTabContent">
+				<div class="tab-pane fade show active" id="details-tab">
+					<div class="col-lg-6 bg-white border rounded py-15 px-20 ml-40px">
+						<div class="d-flex">
+							<h6>@Localizer["details_overview"]</h6>
+							<div class="ml-auto">
+								<a href="#" class="details-page-actions" data-toggle="dropdown">
+									<i data-feather="more-vertical"></i>
+								</a>
+								<div class="dropdown-menu">
+									<a class="dropdown-item" @@click="openModal" href="#">Edit</a>
+								</div>
+							</div>
+						</div>
+						<hr class="hr-description">
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">@Localizer["system_details_name"]</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.Name</p>
+							</div>
+						</div>
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Product Code</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.ProductCode</p>
+							</div>
+						</div>
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Product Manufactories</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.ProductManufactories?.Name</p>
+							</div>
+						</div>
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Type</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.Type</p>
+							</div>
+						</div>
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Category</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.Category?.DisplayName</p>
+							</div>
+						</div>
+
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Can be sold</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@( @Model.CanBeSold.Equals(true) ? "Yes" : "No" )</p>
+							</div>
+						</div>
+
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">EAN</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.EAN</p>
+							</div>
+						</div>
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Warranty</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.Warranty</p>
+							</div>
+						</div>
+						<div class="row no-gutters">
+							<div class="col-fixed-220">
+								<p class="p-sm mb-0">Selling Prince</p>
+							</div>
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Model.SellingPrice @Model.Currency?.Symbol</p>
+							</div>
+						</div>
+
+						<div class="col-fixed-220"></div>
+
+						<h6 class="mt-3">@Localizer["details"]</h6>
+						<hr class="hr-description">
+						<h6 class="mt-3">@Localizer["details_description"]</h6>
+						<hr class="hr-description">
+						<div class="row no-gutters">
+							<div class="d-block mb-sm-0 mb-1">
+								<p class="p-sm mb-0 color-black">@Html.Raw(Model.Description)</p>
+							</div>
+						</div>
+
+						<EditProductModalForm ref="modals" @@action="modalAction" />
+					</div>
+				</div>
+					<div class="tab-pane fade" id="variations-tab" role="tabpanel" aria-labelledby="profile-tab">
+						<Variations />
+					</div>
+				</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('Variations', {
+			template: `
+			<div>
+				<PageOptionsBar :searcheable="true" :pageOptionsComponents="pageOptionsComponents" @@searchInput="searchTable"/>
+				<Table
+					:fields="tableFields"
+					:apiUrl="apiUrl"
+					:httpMethod="httpMethod"
+					tableId="wariation-table"
+					:sortOrder="tableConfig.sortCol"
+					:initialPageSize="20"
+					:reload="tableKey"
+					:customQueryparams="{id: ProductId}"
+					:hasCustomQUeryparams="true"
+					dataPath="result"
+					:actionsSingle="tableActions.single"
+					:actionsSingleDisabled="tableActions.singleDisabled"
+					:actionsMultiple="tableActions.multiple"
+					:actionsMultipleDisabled="tableActions.multipleDisabled"
+					@@triggeredMenuAction="action"
+					:haveContextMenu="true"
+				></Table>
+				<Modal :refreshInputs="refreshInputs" :modalProps="modalProps" @@newValue="emitModalValue" :inputsKey="modalKey"/>
+				<Modal :refreshInputs="refreshInputs" :modalProps="modalAddDeliverableProps" @@newValue="emitModalDeliverableValue" :inputsKey="modalKey"/>
+			</div>
+			`,
+			data() {
+				return {
+					apiUrl: apiEndpoints.Product.GetProductVariationByProductTemplateId,
+					httpMethod: 'get',
+					tableFields: [
+						{
+							name: 'technologyStack',
+							title: 'TechnologyStack',
+							sortFiled: 'technologyStack',
+							visible: true
+						},
+						{
+							name: 'productType',
+							title: 'ProductType',
+							sortFiled: 'productType',
+							visible: true
+						}
+					],
+					tableConfig: {
+						currentPage: 0,
+						pageSize: 10,
+						rowCount: 0,
+						sortCol: [
+							{
+								field: 'name',
+								sortField: 'name',
+								direction: 'asc'
+							}
+						]
+					},
+					refreshInputs: 0,
+					modalKey: 0,
+					tableKey: 0,
+					ProductId: '@Model.Id',
+					editableModal: true,
+					selectedDeliverablesIds: [],
+					unselectedDeliverablesIds: [],
+					variationId: '',
+					tableActions: {
+						single: {
+							"edit": { name: "Edit", icon: "edit" },
+							"deactivate": { name: "Deactivate", icon: "eye-off" },
+						},
+						singleDisabled: {
+							"activate": { name: "Activate", icon: "eye" },
+							"delete": { name: "Delete permanently", icon: "delete" }
+						},
+						multiple: {
+							"deactivate": { name: "Deactivate", icon: "eye-off" }
+						},
+						multipleDisabled: {
+							"activate": { name: "Activate", icon: "eye" },
+							"delete": { name: "Delete permanently", icon: "delete" }
+						}
+					},
+					modalValues: {},
+					waitAddButton: false,
+					modalAddDeliverable: {},
+					pageOptionsComponents: [
+						{
+							name: 'Button',
+							props: {
+								label: 'Add Variation',
+								className: 'ml-auto',
+								btnType: 'success',
+								onClick: () => {
+									this.editableModal = false;
+									this.resetModalValues();
+									this.refreshInputs++;
+									this.modalKey++;
+									$(`#${this.modalProps.id}`).modal("show");
+								}
+							}
+						}]
+				}
+			},
+			computed: {
+				modalAddDeliverableProps() {
+					return {
+						id: 'DeliverableModal',
+						label: 'Add deliverable',
+						formInputs: [
+							{
+								name: 'Input',
+								props: {
+									id: 'entity-name',
+									type: 'text',
+									label: 'Name',
+									required: true,
+									className: 'col-12',
+									value: this.modalAddDeliverable.name,
+								}
+							}
+						],
+						formSubmits: [
+							{
+								name: 'Button',
+								props: {
+									label: 'Cancel',
+									btnType: 'outline-secondary',
+									onClick: () => {
+										$(`#${this.modalAddDeliverableProps.id}`).modal("hide");
+										$(`#${this.modalProps.id}`).modal("show");
+									}
+								}
+							},
+							{
+								name: 'Button',
+								props: {
+									label: 'Save',
+									btnType: 'success',
+									waiting: this.waitAddButton,
+									btnDOMType: 'submit'
+								}
+							}
+						],
+						onSubmit: () => {
+							this.addDeliverable().then(() => {
+								$(`#${this.modalAddDeliverableProps.id}`).modal("hide");
+								$(`#${this.modalProps.id}`).modal("show");
+							});
+						}
+					}
+				},
+				modalProps() {
+					return {
+						id: 'VariationModal',
+						label: this.editableModal ? 'Edit product variation' : 'Add product variation',
+						formInputs: [
+							{
+								name: 'Input',
+								props: {
+									id: 'entity-technologyStack',
+									type: 'text',
+									label: 'TechnologyStack',
+									required: true,
+									className: 'col-12 col-md-6',
+									value: this.modalValues.technologyStack,
+								}
+							},
+							{
+								name: 'Input',
+								props: {
+									id: 'entity-productType',
+									type: 'text',
+									label: 'ProductType',
+									required: true,
+									className: 'col-12 col-md-6',
+									value: this.modalValues.productType,
+								}
+							},
+							{
+								name: 'Select',
+								props: {
+									id: 'entity-productDeliverables',
+									label: 'ProductDeliverables',
+									searchable: true,
+									multiple: true,
+									options: this.convertToSelectList(this.modalValues.productDeliverables),
+									value: this.selectedDeliverablesIds,
+									className: 'col-11',
+								}
+							},
+							{
+								name: 'Button',
+								props: {
+									label: '<span>&#43;<span/>',
+									className: "allwaysWrapped",
+									wrapper: "div",
+									wrapperClass: "col-1",
+									btnType: 'outline-secondary',
+									onClick: () => {
+										$(`#${this.modalProps.id}`).modal("hide");
+										this.resetModalAddDeliverableProps();
+										this.modalKey++;
+										$(`#${this.modalAddDeliverableProps.id}`).modal("show");
+									}
+								}
+							},
+						],
+						formSubmits: [
+							{
+								name: 'Button',
+								props: {
+									label: 'Cancel',
+									btnType: 'outline-secondary',
+									onClick: () => {
+										$(`#${this.modalProps.id}`).modal("hide");
+									}
+								}
+							},
+							{
+								name: 'Button',
+								props: {
+									label: 'Save',
+									btnType: 'success',
+									waiting: this.waitAddButton,
+									btnDOMType: 'submit'
+								}
+							}
+						],
+						onSubmit: () => {
+							if (!this.editableModal) {
+								this.addNewEntity().then(() => {
+									$(`#${this.modalProps.id}`).modal("hide");
+								});
+							} else {
+								this.updateEntity().then(() => {
+									$(`#${this.modalProps.id}`).modal("hide");
+								});
+							}
+						}
+					}
+				},
+			},
+			methods: {
+			
+				async deactivateEntities(array) {
+					array.forEach((entityId, i, a) => {
+						customAjaxRequest(apiEndpoints.Product.DisableProductVariation, 'POST', { productId: entityId }).then(() => {
+							if (i === a.length - 1) {
+								this.tableKey++;
+							}
+						}).catch(e => {
+							toast.notifyErrorList(e);
+						});
+					});
+				},
+				async activateEntities(array) {
+					array.forEach((entityId, i, a) => {
+						customAjaxRequest(apiEndpoints.Product.ActivateProductVariation, 'POST', { productId: entityId }).then(() => {
+							if (i === a.length - 1) {
+								this.tableKey++;
+							}
+						}).catch(e => {
+							toast.notifyErrorList(e);
+						});
+					});
+				},
+				async deleteEntities(array) {
+					array.forEach((entityId, i, a) => {
+						customAjaxRequest(apiEndpoints.Product.DeleteProductVariation, 'DELETE', { id: entityId }).then(() => {
+							if (i === a.length - 1) {
+								this.tableKey++;
+							}
+						}).catch(e => {
+							toast.notifyErrorList(e);
+						});
+					});
+				},
+				async addNewEntity() {
+					this.waitAddButton = true;
+					let newVariation = {
+						technologyStack: this.modalValues.technologyStack,
+						productType: this.modalValues.productType,
+						productTemplateId: this.ProductId,
+						selectedDeliverablesIds: this.selectedDeliverablesIds
+					};
+					return new Promise((resolve, reject) => {
+						customAjaxRequest(apiEndpoints.Product.AddProductVariation, 'PUT', newVariation).then(() => {
+							this.tableKey++;
+							resolve(true);
+						}).catch(e => {
+							toast.notifyErrorList(e);
+							reject(false);
+						}).finally(() => {
+							this.waitAddButton = false;
+						});
+					});
+				},
+				async updateEntity() {
+					this.waitAddButton = true;
+					this.variationId = '';
+					return new Promise((resolve, reject) => {
+						if (this.modalValues.productDeliverables.length > this.selectedDeliverablesIds.length) {
+							this.unselectedDeliverablesIds = [];
+							this.modalValues.productDeliverables.forEach(deliverable => {
+								let index = this.selectedDeliverablesIds.findIndex(element => element == deliverable.id);
+								if (index === -1) this.unselectedDeliverablesIds.push(deliverable.id);
+							});
+						}
+						//api to modifi deliverables
+						customAjaxRequest(apiEndpoints.Product.UpdateProductVariation, 'POST', {
+							producVariation: this.modalValues,
+							deliverablesIds: this.unselectedDeliverablesIds,
+							selectedDeliverablesIds: this.selectedDeliverablesIds
+						}).then(() => {
+							this.tableKey++;
+							resolve(true);
+						}).catch(e => {
+							toast.notifyErrorList(e);
+							reject(false);
+						}).finally(() => {
+							this.waitAddButton = false;
+						});
+					});
+				},
+				async addDeliverable() {
+					this.waitAddButton = true;
+					return new Promise((resolve, reject) => {
+						customAjaxRequest(apiEndpoints.Product.AddProductDeliverable, 'PUT', this.modalAddDeliverable).then(result => {
+							this.tableKey++;
+							customAjaxRequest(apiEndpoints.Product.GetProductDeliverableById, 'GET', { deliverableId: result }).then(res => {
+								this.modalValues.productDeliverables.push(res);
+							});
+							this.selectedDeliverablesIds.push(result);
+							resolve(true);
+						}).catch(e => {
+							toast.notifyErrorList(e);
+							reject(false);
+						}).finally(() => {
+							this.waitAddButton = false;
+						});
+					});
+				},
+				async loadEntity(entityId) {
+					return new Promise((resolve, reject) => {
+						customAjaxRequest(apiEndpoints.Product.GetProductVariationById, 'GET', { productVariatinoId: entityId }).then(result => {
+							resolve(result);
+						}).catch(e => {
+							toast.notifyErrorList(e);
+							reject(false);
+						});
+					});
+				},
+				editEntity(entityId) {
+					this.variationId = entityId;
+					this.editableModal = true;
+					this.resetModalValues();
+					this.loadEntity(entityId).then(result => {
+						result.productDeliverables.forEach(deliverable => this.selectedDeliverablesIds.push(deliverable.id));
+						this.modalValues = result;
+						customAjaxRequest(apiEndpoints.Product.GetProductDeliverablesWithNoVariation).then(result => {
+							if (result) {
+								this.modalValues.productDeliverables.push(...result);
+							}
+						});
+						this.modalKey++;
+						this.refreshInputs++;
+						$(`#${this.modalProps.id}`).modal("show");
+					});
+				},
+				convertToSelectList(array) {
+					if (!array) return [];
+					return array.map(e => {
+						const newObj = {
+							label: e.name,
+							value: e.id
+						}
+						return newObj;
+					});
+				},
+				emitModalValue(val) {
+					if (val.id != "entity-productDeliverables") {
+						const newVal = val.value === 'true' ? true : val.value === 'false' ? false : val.value;
+						this.modalValues[val.id.replace('entity-', '')] = newVal;
+					} else {
+						this.selectedDeliverablesIds = val.value;
+					}
+				},
+				emitModalDeliverableValue(val) {
+					const newVal = val.value === 'true' ? true : val.value === 'false' ? false : val.value;
+					this.modalAddDeliverable[val.id.replace('entity-', '')] = newVal;
+				},
+				resetModalAddDeliverableProps() {
+					this.modalAddDeliverable = {
+						name: null,
+						productVariationId: this.variationId
+					}
+				},
+				resetModalValues() {
+					this.modalValues = {
+						technologyStack: null,
+						productType: null,
+						productDeliverables: []
+					};
+					customAjaxRequest(apiEndpoints.Product.GetProductDeliverablesWithNoVariation).then(result => {
+						if (result) {
+							this.modalValues.productDeliverables.push(...result);
+						}
+					});
+					this.selectedDeliverablesIds = [];
+					this.variationId = '';
+				},
+				action(action) {
+					switch (action.key) {
+						case 'deactivate': {
+							this.deactivateEntities(action.value);
+							break;
+						} case 'activate': {
+							this.activateEntities(action.value);
+							break;
+						} case 'edit': {
+							this.editEntity(action.value[0]);
+							break;
+						} case 'delete': {
+							this.deleteEntities(action.value);
+							break;
+						}
+					}
+				},
+				searchTable(val) {
+					if (val.length > 2) {
+						this.searchString = val;
+						this.tableKey++;
+					} else if (val === '') {
+						this.searchString = '';
+						this.tableKey++;
+					}
+				}
+			}
+		});
+		Vue.component('ProductDetails', {
+			template: '#page-template',
+			beforeCreate() {
+				const breadcrumbs = [
+					'',
+					'<a href="/product">Products</a>',
+					`@Model.Name`
+				]
+				this.$store.dispatch("setCustomBreadcrumbsAction", breadcrumbs);
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			methods: {
+				openModal() {
+					this.$refs['modals'].editProduct('@Model.Id');
+				},
+				modalAction() {
+					location.reload();
+				}
+			}
+		});
+	</script>
+}

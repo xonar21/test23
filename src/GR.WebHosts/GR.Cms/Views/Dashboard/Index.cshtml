@@ -1,0 +1,2060 @@
+@{
+	ViewData["Title"] = "Dashboard";
+}
+@section Styles{
+	<style>
+		.text-align-center {
+			text-align: center;
+		}
+
+		.border-right-1px {
+			border-right: 1px solid #DCE0E4;
+		}
+
+		.cl-grey {
+			color: #808890;
+		}
+
+		.w-80px {
+			width: 80px;
+		}
+
+		.block-wrapper {
+			padding: 10px 20px;
+		}
+
+		.chart-canvas {
+			max-width: 170px;
+			width: 170px;
+			margin-top: 25px;
+			margin-bottom: 25px;
+			transition: 0.3s ease-in-out;
+		}
+
+		@@media screen and (max-width: 1450px) and (min-width: 1200px) {
+			.chart-canvas.sidebar-open {
+				max-width: 100px;
+				width: 100px;
+				transition: 0.3s ease-in-out;
+			}
+		}
+
+		.block-label {
+			font-size: 14px;
+			font-weight: 600;
+		}
+
+		/*.line-chart-wrapper {
+			height: 200px;
+		}*/
+
+		.chart-label {
+			border-bottom: 1px solid #DCE0E4;
+			padding-bottom: 3px;
+		}
+
+		.chart-label-info {
+			color: #2850F0;
+			cursor: pointer;
+		}
+
+		.chart-legend {
+			margin-left: 20px;
+			width: calc(100% - 190px);
+		}
+
+		.chart-legend-item {
+			height: 45px;
+			width: 150px;
+		}
+
+		.chart-legend-item-data {
+			margin-left: 10px;
+		}
+
+		.chart-legend-item-color {
+			width: 3px;
+			min-width: 3px;
+			height: calc(100% - 10px);
+		}
+
+		.chart-legend-item-text,
+		.chart-legend-item-count {
+			line-height: 1;
+		}
+
+		.item-count {
+			//font-size: 24px;
+			letter-spacing: 0;
+			line-height: 1;
+			margin-bottom: 3px;
+		}
+
+		.fz-20px {
+			font-size: 20px !important;
+		}
+
+		.chart-legend-item-text {
+			font-size: 14px;
+			color: #808890;
+			letter-spacing: 0;
+			white-space: nowrap;
+			line-height: 16px;
+		}
+
+		.progress-procent {
+			margin-left: 10px;
+			min-width: 50px;
+		}
+
+			.progress-procent.row-procent {
+				display: flex;
+			}
+
+				.progress-procent.row-procent .progress-procent-count {
+					margin-left: 5px;
+				}
+
+		.progress-procent-count {
+			line-height: 1;
+			font-size: 13px;
+			letter-spacing: -1px;
+		}
+	</style>
+}
+<div>
+	<DashboardLeads />
+</div>
+@section Scripts{
+	<script src="~/themes/gear/js/components/pageOptionsbar.js"></script>
+	<script src="~/themes/gear/js/components/dropdownButton.js"></script>
+	<script src="~/themes/gear/js/components/loader.js"></script>
+	<script src="~/lib/Chart.js/dist/Chart.js"></script>
+	<script src="~/themes/gear/js/components/table/table.js"></script>
+
+	<script>
+		Vue.filter('numberWithCommas', x => {
+			if (x)
+				return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+			else return x;
+		});
+	</script>
+
+	@*CountUpNumber*@
+
+	<script type="text/x-template" id="countUpNumber-template">
+		<div :id="'countup-' + id" class="countup-number">
+			{{ number }}
+		</div>
+	</script>
+	<script>
+		Vue.component('CountUpNumber', {
+			template: '#countUpNumber-template',
+			props: {
+				id: String,
+				number: Number,
+			},
+			mounted() {
+
+			}
+		});
+	</script>
+
+	@*ProgressProcent*@
+	<script type="text/x-template" id="progressProcent-template">
+		<div :class="className + ' progress-procent'" :style="'color: ' + color">
+			<i :data-feather="icon"></i>
+			<div class="progress-procent-count">
+				{{ procent | absoluteProcent}}%
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('ProgressProcent', {
+			template: `#progressProcent-template`,
+			props: {
+				procent: Number,
+				className: String
+			},
+			computed: {
+				icon() {
+					const procent = this.procent;
+					return procent === 0 ? 'minus'
+						: procent > 0 ? 'trending-up'
+							: 'trending-down';
+				},
+				color() {
+					const procent = this.procent;
+					return procent === 0 ? '#808890'
+						: procent > 0 ? '#20BC40'
+							: '#FF2850';
+				}
+			},
+			filters: {
+				absoluteProcent: value => {
+					return Math.abs(value);
+				}
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			updated() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			}
+		});
+	</script>
+
+	@*ChartLegendItem*@
+	<script type="text/x-template" id="chartLegendItem-template">
+		<div class="chart-legend-item mt-1">
+			<div class="d-flex align-items-end h-100">
+				<div class="chart-legend-item-color" :style="'background-color: '+ data.color"></div>
+				<ProgressProcent v-if="showProcent" :procent="this.data.procent" className="d-flex flex-column justify-content-center align-items-center" />
+				<div class="chart-legend-item-data">
+					<div class="chart-legend-item-count" :style="'font-size: '+ data.dataFontSize">
+						{{ data.count | numberWithCommas }}
+					</div>
+					<div class="chart-legend-item-text" :style="'font-size: '+ data.labelFontSize">
+						{{ data.text | numberWithCommas }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('ChartLegendItem', {
+			template: '#chartLegendItem-template',
+			props: {
+				data: Object
+			},
+			computed: {
+				showProcent() {
+					return typeof this.data.procent !== 'undefined';
+				}
+			}
+		});
+	</script>
+
+	@*Doughnut component*@
+	<script type="text/x-template" id="doughnutChart-template">
+		<div class="card doughnut-chart-wrapper block-wrapper">
+			<div class="chart-label block-label d-flex">
+				<div class="chart-label-text">
+					{{ chartTitle }}
+				</div>
+				<div class="chart-label-info ml-auto d-flex align-items-center"
+					 @@click="chartInfoClick">
+					<i data-feather="alert-circle"></i>
+				</div>
+			</div>
+			<div class="d-flex align-items-center chart doughnut-chart flex-wrap">
+				<div class="chart-canvas" :class="{'sidebar-open' : $store.state.sidebarOpen}">
+					<canvas :id="id"></canvas>
+				</div>
+				<div class="chart-legend flex-grow-1 d-flex flex-wrap  justify-content-center">
+					<template v-for="(l,i) in labels">
+						<ChartLegendItem :data="l" :key="i" />
+					</template>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Chart.pluginService.register({
+			beforeDraw: function (chart) {
+				if (chart.config.options.elements.center) {
+					// Get ctx from string
+					var ctx = chart.chart.ctx;
+
+					// Get options from the center object in options
+					var centerConfig = chart.config.options.elements.center;
+					var fontStyle = centerConfig.fontStyle || 'Arial';
+					var txt = centerConfig.text;
+					var txt2 = centerConfig.text2;
+					var color = centerConfig.color || '#000';
+					var maxFontSize = centerConfig.maxFontSize || 75;
+					var sidePadding = centerConfig.sidePadding || 20;
+					var sidePaddingCalculated = (sidePadding / 100) * (chart.innerRadius * 2)
+					// Start with a base font of 30px
+					ctx.font = "30px " + fontStyle;
+
+					// Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+					var stringWidth = ctx.measureText(txt).width;
+					var string2Width = ctx.measureText(txt2).width;
+					var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+
+					//Custom
+					var widest = stringWidth > string2Width ? stringWidth : string2Width;
+
+					// Find out how much the font can grow in width.
+					var widthRatio = elementWidth / widest;
+					var newFontSize = Math.floor(30 * widthRatio);
+					var elementHeight = (chart.innerRadius * 2);
+
+					// Pick a new font size so it will not be larger than the height of label.
+					var fontSizeToUse = Math.min(newFontSize, elementHeight, maxFontSize);
+					var minFontSize = centerConfig.minFontSize;
+					var lineHeight = centerConfig.lineHeight || 25;
+					var wrapText = false;
+
+					if (minFontSize === undefined) {
+						minFontSize = 20;
+					}
+
+					if (minFontSize && fontSizeToUse < minFontSize) {
+						fontSizeToUse = minFontSize;
+						wrapText = true;
+					}
+
+					// Set font settings to draw it correctly.
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+					var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+					ctx.font = '600 ' + fontSizeToUse + "px " + fontStyle;
+					ctx.fillStyle = color;
+
+					if (!wrapText) {
+						if (centerConfig.text2) {
+							ctx.fillText(txt, centerX, centerY - 5);
+							ctx.fillText(txt2, centerX, centerY + 15);
+						} else {
+							ctx.fillText(txt, centerX, centerY);
+						}
+						ctx.font = '14px ' + fontStyle;
+						return;
+					}
+
+					var words = txt.split(' ');
+					var line = '';
+					var lines = [];
+
+					// Break words up into multiple lines if necessary
+					for (var n = 0; n < words.length; n++) {
+						var testLine = line + words[n] + ' ';
+						var metrics = ctx.measureText(testLine);
+						var testWidth = metrics.width;
+						if (testWidth > elementWidth && n > 0) {
+							lines.push(line);
+							line = words[n] + ' ';
+						} else {
+							line = testLine;
+						}
+					}
+
+					// Move the center up depending on line height and number of lines
+					centerY -= (lines.length / 2) * lineHeight;
+
+					for (var n = 0; n < lines.length; n++) {
+						ctx.fillText(lines[n], centerX, centerY);
+						centerY += lineHeight;
+					}
+					//Draw text in center
+					ctx.fillText(line, centerX, centerY);
+				}
+			}
+		});
+		Vue.component('DoughnutChart', {
+			template: '#doughnutChart-template',
+			props: {
+				chartTitle: String,
+				id: String,
+				labels: Array,
+				datasets: Array,
+				totalCount: [Number, String],
+				textTotal: String,
+				link: String
+			},
+			computed: {
+				computedLabels() {
+					let returnArray = [];
+					this.labels.forEach(l => {
+						returnArray.push(l.text);
+					});
+					return returnArray;
+				}
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+				let _ = new Chart($(`#${this.id}`), {
+					type: 'doughnut',
+					data: {
+						labels: this.computedLabels,
+						datasets: this.datasets
+					},
+					options: {
+						borderWidth: 0,
+						legend: false,
+						aspectRatio: 1,
+						responsive: true,
+						elements: {
+							center: {
+								text: `${this.totalCount}`,
+								text2: this.textTotal ? `${this.textTotal}` : null,
+								color: '#081018', // Default is #000000
+								fontStyle: 'Blinker', // Default is Arial
+								maxFontSize: 25,
+								sidePadding: 20, // Default is 20 (as a percentage)
+								minFontSize: 10, // Default is 20 (in px), set to false and text will not wrap.
+								lineHeight: 20 // Default is 25 (in px), used for when text wraps
+							}
+						},
+						tooltips: {
+							callbacks: {
+								label: function (tooltipItem, data) {
+									var value = data.datasets[0].data[tooltipItem.index];
+									value = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+									return value;
+								},
+								labelTextColor: () => '#081018'
+							},
+							backgroundColor: '#FFFFFF',
+							displayColors: false,
+							borderWidth: 1,
+							borderColor: '#DCE0E4'
+						}
+					}
+				});
+			},
+			updated() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			methods: {
+				chartInfoClick() {
+					window.location.href = this.link;
+				}
+			}
+		});
+	</script>
+
+	@*Pie component*@
+	<script type="text/x-template" id="pieChart-template">
+		<div class="card doughnut-chart-wrapper block-wrapper">
+			<div class="chart-label block-label d-flex">
+				<div class="chart-label-text">
+					{{ chartTitle }}
+				</div>
+				<div class="chart-label-info ml-auto d-flex align-items-center"
+					 @@click="chartInfoClick">
+					<i data-feather="alert-circle"></i>
+				</div>
+			</div>
+			<div class="d-flex align-items-center chart doughnut-chart flex-wrap">
+				<div class="chart-canvas" :class="{'sidebar-open' : $store.state.sidebarOpen}">
+					<canvas :id="id"></canvas>
+				</div>
+				<div class="chart-legend flex-grow-1 d-flex flex-wrap  justify-content-center">
+					<template v-for="(l,i) in labels">
+						<ChartLegendItem :data="l" :key="i" />
+					</template>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('PieChart', {
+			template: '#pieChart-template',
+			props: {
+				chartTitle: String,
+				id: String,
+				labels: Array,
+				datasets: Array,
+				totalCount: [Number, String],
+				textTotal: String,
+				link: String,
+				isPercentage: Boolean,
+				hasMultipleTooltipValues: Boolean
+			},
+			computed: {
+				computedLabels() {
+					let returnArray = [];
+					this.labels.forEach(l => {
+						returnArray.push(l.text);
+					});
+					return returnArray;
+				},
+				computedDatasets() {
+					let returnArray = [];
+					let sum = this.datasets[0].data.reduce((a, b) => a + b, 0);
+					this.datasets[0].data.forEach(d => {
+						let percentage = Math.round((d / sum) * 100);
+						returnArray.push(percentage);
+					})
+					this.datasets[0].data = returnArray.slice(0);
+					return this.datasets;
+
+				}
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+				let _ = new Chart($(`#${this.id}`), {
+					type: 'pie',
+					data: {
+						labels: this.computedLabels,
+						datasets: this.datasets,
+						isPercentage: this.isPercentage,
+						hasMultipleTooltipValues: this.hasMultipleTooltipValues,
+						totalCount: this.totalCount
+					},
+					options: {
+						borderWidth: 0,
+						legend: false,
+						aspectRatio: 1,
+						responsive: true,
+						elements: {
+						},
+						tooltips: {
+							callbacks: {
+								label: function (tooltipItem, data) {
+									var value = data.datasets[0].data[tooltipItem.index];
+									value = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+									if (data.isPercentage) return value + '%';
+									return value;
+								},
+								afterLabel: function (tooltipItem, data) {
+									if (!data.hasMultipleTooltipValues) return '';
+									var percent = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] / data.totalCount * 100;
+									percent = percent.toFixed(2); // make a nice string
+									return 'Percentage: ' + percent + '%';
+								},
+								labelTextColor: () => '#081018'
+							},
+							backgroundColor: '#FFFFFF',
+							displayColors: false,
+							borderWidth: 1,
+							borderColor: '#DCE0E4'
+						},
+					}
+				});
+			},
+			updated() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			methods: {
+				chartInfoClick() {
+					window.location.href = this.link;
+				}
+			}
+		});
+	</script>
+
+
+	@*BarChart*@
+	<script type="text/x-template" id="barChart-template">
+		<div class="card line-chart-wrapper block-wrapper">
+			<div class="pb-2 block-label d-flex">
+				<div class="chart-label-text">
+					{{ chartTitle }}
+				</div>
+				<div class="chart-label-info ml-auto d-flex align-items-center"
+					 @@click="chartInfoClick">
+					<i data-feather="alert-circle"></i>
+				</div>
+			</div>
+			<div class="d-flex align-items-center chart doughnut-chart flex-wrap h-100">
+				<canvas :id="id"></canvas>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('BarChart', {
+			template: '#barChart-template',
+			props: {
+				chartTitle: String,
+				id: String,
+				labels: Array,
+				datasets: Array,
+				link: String,
+				isPercentage: Boolean,
+				hasCurrency: Boolean
+			},
+			computed: {
+				computedLabels() {
+					let returnArray = [];
+					this.labels.forEach(l => {
+						returnArray.push(l.text);
+					});
+					return returnArray;
+				}
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+				let _ = new Chart($(`#${this.id}`), {
+					type: 'bar',
+					data: {
+						labels: this.computedLabels,
+						datasets: this.datasets,
+						isPercentage: this.isPercentage,
+						hasCurrency: this.hasCurrency
+					},
+					options: {
+						aspectRatio: 3,
+						elements: {
+							line: {
+								tension: 0
+							}
+						},
+						legend: {
+							display: this.datasets.length > 1 ? true : false
+						},
+						tooltips: {
+							backgroundColor: '#FFFFFF',
+							displayColors: false,
+							callbacks: {
+								label: function (tooltipItem, data) {
+									let value = tooltipItem.value;
+									value = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+									return data.isPercentage ? value + ' %' : data.hasCurrency ? value + ' @ViewBag.GlobalCurrency' : value;
+								},
+								labelTextColor: () => '#081018',
+								title: () => '',
+							},
+							borderWidth: 1,
+							borderColor: '#DCE0E4'
+						},
+						scales: {
+							xAxes: [{
+								maxBarThickness: 40
+							}],
+							yAxes: [{
+								ticks: {
+									beginAtZero: true,
+									userCallback: function (value, index, values) {
+										// Convert the number to a string and splite the string every 3 charaters from the end
+										value = value.toString();
+										value = value.split(/(?=(?:...)*$)/);
+										value = value.join(',');
+										return value;
+									}
+								}
+							}]
+						},
+					}
+				});
+			},
+			updated() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			methods: {
+				chartInfoClick() {
+					window.location.href = this.link;
+				}
+			}
+		});
+	</script>
+
+	@*LineChart*@
+	<script type="text/x-template" id="lineChart-template">
+		<div class="card line-chart-wrapper block-wrapper">
+			<div class="pb-2 block-label d-flex">
+				<div class="chart-label-text">
+					{{ chartTitle }}
+				</div>
+				<div class="chart-label-info ml-auto d-flex align-items-center"
+					 @@click="chartInfoClick">
+					<i data-feather="alert-circle"></i>
+				</div>
+			</div>
+			<div class="d-flex align-items-center chart doughnut-chart flex-wrap h-100">
+				<canvas :id="id"></canvas>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('LineChart', {
+			template: '#lineChart-template',
+			props: {
+				chartTitle: String,
+				id: String,
+				labels: Array,
+				datasets: Array,
+				link: String,
+				isPercentage: Boolean,
+				hasCurrency: Boolean
+			},
+			computed: {
+				computedLabels() {
+					let returnArray = [];
+					this.labels.forEach(l => {
+						returnArray.push(l.text);
+					});
+					return returnArray;
+				}
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+				let _ = new Chart($(`#${this.id}`), {
+					type: 'line',
+					data: {
+						labels: this.computedLabels,
+						datasets: this.datasets,
+						isPercentage: this.isPercentage,
+						hasCurrency: this.hasCurrency
+					},
+					options: {
+						aspectRatio: 3,
+						elements: {
+							line: {
+								tension: 0
+							}
+						},
+						legend: {
+							display: this.datasets.length > 1 ? true : false
+						},
+						tooltips: {
+							backgroundColor: '#FFFFFF',
+							displayColors: false,
+							callbacks: {
+								label: function (tooltipItem, data) {
+									let value = tooltipItem.value;
+									value = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+									return data.isPercentage ? value + ' %' : data.hasCurrency ? value + "@ViewBag.GlobalCurrency" : value;
+								},
+								labelTextColor: () => '#081018',
+								title: () => '',
+							},
+							borderWidth: 1,
+							borderColor: '#DCE0E4'
+						},
+						scales: {
+					@*		xAxes: [{
+								type: 'time',
+								time: {
+									unit: 'day',
+									stepSize: '1',
+									isoWeekday: true,
+									displayFormats: {
+										day: 'DD'
+									}
+								}
+							}],*@
+							yAxes: [{
+								ticks: {
+									beginAtZero: true,
+									userCallback: function (value, index, values) {
+										// Convert the number to a string and splite the string every 3 charaters from the end
+										value = value.toString();
+										value = value.split(/(?=(?:...)*$)/);
+										value = value.join(',');
+										return value;
+									}
+								}
+							}]
+						},
+					@*	legend: {
+							onClick: function (_, legendItem) {
+								var index = legendItem.datasetIndex;
+								var ci = this.chart;
+								if (ci.data.datasets[index].hidden) {
+									ci.data.datasets.forEach((_, i, a) => {
+										let meta = ci.data.datasets[i];
+										if (index !== i) {
+											meta.hidden = true;
+										} else {
+											meta.hidden = false;
+										}
+										if (i === a.length - 1) {
+											ci.update();
+										}
+									});
+								}
+							},
+							labels: {
+								boxWidth: 30,
+								boxHeight: 4
+							}
+						}*@
+					}
+				});
+			},
+			updated() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			methods: {
+				chartInfoClick() {
+					window.location.href = this.link;
+				}
+			}
+		});
+	</script>
+
+	@*SimpleBlock*@
+	<script type="text/xtemplate" id="simpleBlock-template">
+		<div :class="className">
+			<h3 class="font-weight-normal mb-10px">
+				{{ title }}
+			</h3>
+			<div class="card block-wrapper">
+				<div class="d-flex">
+					<div class="block-label mb-10px">
+						{{ label }}
+					</div>
+					<div class="chart-label-info ml-auto d-flex align-items-center"
+						 @@click="infoClick">
+						<i data-feather="alert-circle"></i>
+					</div>
+				</div>
+				<div class="d-flex align-items-center">
+					<ProgressProcent v-if="procent" className="row-procent" :procent="procent" />
+					<div class="ml-2 item-count">
+						{{ value | numberWithCommas }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('SimpleBlock', {
+			template: '#simpleBlock-template',
+			props: {
+				className: String,
+				title: String,
+				label: String,
+				link: String,
+				value: [String, Number],
+				procent: Number
+			},
+			methods: {
+				infoClick() {
+					window.location.href = this.link;
+				}
+			}
+		});
+	</script>
+
+	<script type="text/xtemplate" id="blockWithIndices-template">
+		<div :class="className">
+			<div class="card block-wrapper h-100">
+				<div class="d-flex">
+					<div class="block-label mb-10px chart-label-text">
+						{{ label }}
+					</div>
+				</div>
+				<div class="align-items-center item-count text-align-center pb-2 pt-5">
+					{{ value | numberWithCommas }}
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('BlockWithIndices', {
+			template: '#blockWithIndices-template',
+			props: {
+				className: String,
+				label: String,
+				value: [String, Number],
+			},
+			methods: {
+			}
+		});
+	</script>
+
+
+	@*ColumnsBlock*@
+	<script type="text/x-template" id="columnsBlock-template">
+		<div>
+			<h3 class="font-weight-normal mb-10px ml-20px">
+				{{ title }}
+			</h3>
+			<div class="card block-wrapper">
+				<div class="row">
+					<div class="col">
+						<div class="row">
+							<div v-for="(block,i) in blocks"
+								 class="col-12 col-md-6"
+								 :class="responsiveClass">
+								<div :class="{'border-right-1px' : blocks.length > i + 1 }">
+									<div class="block-label mb-10px">
+										{{ block.label }}
+									</div>
+									<div class="d-flex align-items-center">
+										<ProgressProcent className="row-procent" :procent="block.procent" />
+										<div class="ml-2 item-count">
+											{{ block.value | numberWithCommas }}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-auto">
+						<div class="d-flex">
+							<div class="chart-label-info ml-auto d-flex align-items-center"
+								 @@click="infoClick">
+								<i data-feather="alert-circle"></i>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</script>
+
+	@*RowsBlock*@
+	<script type="text/x-template" id="rowsBlock-template">
+		<div>
+			<h3 class="font-weight-normal mb-10px ml-20px">
+				{{ title }}
+			</h3>
+			<div class="card block-wrapper ">
+				<div class="row">
+					<div class="col-10 ">
+						<div v-for="(block,i) in blocks"
+							 class="row justify-content-center">
+							<div class="col">
+								<div class="block-label mb-10px center-block">
+									{{ block.label }}
+								</div>
+								<div class="d-flex align-items-center">
+									<div class="ml-2 item-count">
+										{{ block.value | numberWithCommas }}
+									</div>
+									<ProgressProcent className="row-procent" :procent="block.procent" />
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-auto">
+						<div class="d-flex">
+							<div class="chart-label-info ml-auto d-flex align-items-center"
+								 @@click="infoClick">
+								<i data-feather="alert-circle"></i>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('RowsBlock', {
+			template: '#rowsBlock-template',
+			props: {
+				title: String,
+				className: String,
+				blocks: Array,
+				link: String
+			},
+			computed: {
+				responsiveClass() {
+					switch (this.blocks.length) {
+						case 1: {
+							return 'col-lg-12';
+						} case 2: {
+							return 'col-lg-6';
+						} case 3: {
+							return 'col-lg-4';
+						} default: {
+							return 'col-lg-3';
+						}
+					}
+				}
+			},
+			methods: {
+				infoClick() {
+					window.location.href = this.link;
+				}
+			}
+		})
+	</script>
+
+	@*RowsBlockLead*@
+	<script type="text/x-template" id="rowBlockLead-template">
+		<div>
+			<div class="card pt-2">
+				<h3 class="font-weight-normal mb-10px ml-20px">
+					Business Rule
+				</h3>
+				<div class="col-12 ">
+					<table class="table">
+						<thead>
+							<tr>
+								<th class="px-10 py-1 border-grey" >Price</th>
+								<th class="px-10 py-1 col-3 border-grey text-center">Value @ViewBag.GlobalCurrency</th>
+							</tr>
+						</thead>
+						<tbody>
+							<template v-for="(block, i) in blocks" class="p-1">
+								<tr>
+									<th colspan ="2" class="px-10 py-1 col-12 border-grey">{{block.stateName}}</th>
+								</tr>
+								<template v-for="lead in block.leads">
+									<tr>
+										<td class="px-10 py-1 col-9 border-grey text-left">{{lead.leadName}}</td>
+										<td class="px-10 py-1 col-3 border-grey text-right">{{lead.value}} </td>
+									</tr>
+								</template>
+								<tr>
+									<td class="px-10 py-1 col-9 border-grey text-right">&nbsp;</td>
+									<td class="px-10 py-1 col-3 border-grey text-right">{{block.totalValue}}</td>
+								</tr>
+							</template>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('RowsBlockLeads', {
+			template: '#rowBlockLead-template',
+			props: {
+				blocks: Array,
+			},
+			mounted() {
+				console.log(this.blocks, 'blocks');
+			},
+			computed: {
+				responsiveClass() {
+					switch (this.blocks.length) {
+						case 1: {
+							return 'col-lg-12';
+						} case 2: {
+							return 'col-lg-6';
+						} case 3: {
+							return 'col-lg-4';
+						} default: {
+							return 'col-lg-3';
+						}
+					}
+				}
+			},
+			methods: {
+				infoClick() {
+					window.location.href = this.link;
+				}
+			}
+		})
+	</script>
+
+	@*RowBlockUsers*@
+	<script type="text/x-template" id="rowsBlockUser-template">
+		<div>
+			<div class="card block-wrapper ">
+				<h3 class="font-weight-normal mb-10px ml-20px">
+					{{ title }}
+				</h3>
+				<div class="col-12 ">
+					<table class="table">
+						<thead>
+							<tr>
+								<th scope="col">UserName</th>
+								<th scope="col">Number of deals</th>
+								<th scope="col">Deals value</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="(block, i) in blocks" :key="i">
+								<td>{{ block.label }}</td>
+								<td>{{ block.nr }}</td>
+								<td>{{ block.sum.toString()}}&nbsp;@ViewBag.GlobalCurrency</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('RowsBlockUser', {
+			template: '#rowsBlockUser-template',
+			props: {
+				title: String,
+				blocks: Array
+			},
+			computed: {
+				responsiveClass() {
+					switch (this.blocks.length) {
+						case 1: {
+							return 'col-lg-12';
+						} case 2: {
+							return 'col-lg-6';
+						} case 3: {
+							return 'col-lg-4';
+						} default: {
+							return 'col-lg-3';
+						}
+					}
+				}
+			},
+			methods: {
+				infoClick() {
+					window.location.href = this.link;
+				}
+			}
+		})
+	</script>
+
+	<script type="text/x-template" id="leadsAnalysis-template">
+		<div class="p-0">
+
+		</div>
+	</script>
+	<script>
+		Vue.component('LeadsAnalysis', {
+			template: '#leadsAnalysis-template',
+			props: {
+				leadGroups: Array,
+				title: String,
+			}
+		})
+	</script>
+
+	@*ColumnBlocksWithTotal*@
+	<script type="text/x-template" id="columnBlocksWithTotal-template">
+		<div>
+			<h3 class="font-weight-normal mb-10px ml-20px">
+				{{title}}
+			</h3>
+			<div class="card block-wrapper">
+				<div class="row">
+					<div class="col">
+						<div class="row">
+							<div class="col-12" v-for="(block,i) in blocks">
+								<div :class="{'border-right-1px' : blocks.length > i + 1 }">
+									<div class="block-label mb-10px">
+										{{block.label}}
+									</div>
+									<div class="d-flex align-items-center mt-5px">
+										<ProgressProcent className="row-procent ml-0" :procent="block.totalProcent" />
+										<div class="ml-2 item-count">
+											{{ block.totalValue | numberWithCommas }}
+										</div>
+									</div>
+									<div class="d-flex align-items-center mt-5px" v-for="(gp,i) in block.indices" :key="i">
+										<div class="block-label w-80px">
+											{{ gp.label }}
+										</div>
+										<ProgressProcent className="row-procent" :procent="gp.procent" />
+										<div class="ml-2 item-count fz-20px cl-grey">
+											{{ gp.value | numberWithCommas }}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-auto">
+						<div class="d-flex">
+							<div class="chart-label-info ml-auto d-flex align-items-center"
+								 @@click="infoClick">
+								<i data-feather="alert-circle"></i>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		Vue.component('ColumnBlocksWithTotal', {
+			template: '#columnBlocksWithTotal-template',
+			props: {
+				title: String,
+				blocks: Array,
+				link: String
+			},
+			computed: {
+				responsiveClass() {
+					switch (this.blocks.length) {
+						case 1: {
+							return 'col-lg-12';
+						} case 2: {
+							return 'col-lg-6';
+						} case 3: {
+							return 'col-lg-4';
+						} default: {
+							return 'col-lg-3';
+						}
+					}
+				}
+			},
+			methods: {
+				infoClick() {
+					window.location.href = this.link;
+				}
+			}
+		});
+	</script>
+
+	@*Dashboard*@
+	<script type="text/x-template" id="dashboardLeads-template">
+		<div>
+			<div>
+				<PageOptionsBar :pageOptionsComponents="pageOptionsComponents"
+								:filters="tableFilters"
+								@@filterResult="filterResult" />
+				<div class="position-relative">
+					<div v-show="!dataLoaded" class="section-loader" style="min-height: 300px;"><Loader /></div>
+					<div v-if="dataLoaded" class="pl-5px">
+						<hr />
+						<div class="container-fluid">
+							<div class="row">
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<DoughnutChart chartTitle="Potential clients count"
+												   id="leadCountChart"
+												   :labels="leadCountChart.labels"
+												   :datasets="leadCountChart.datasets"
+												   :totalCount="leadCountChart.totalCount"
+												   link="/crmreport?type=leads"
+												   :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<DoughnutChart chartTitle="New clients"
+												   id="newLeadChart"
+												   :labels="newLeadChart.labels"
+												   :datasets="newLeadChart.datasets"
+												   :totalCount="newLeadChart.totalCount"
+												   link="/crmreport?type=leads"
+												   :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<DoughnutChart chartTitle="Clients with WON status"
+												   id="wonLeadChart"
+												   :labels="wonLeadChart.labels"
+												   :datasets="wonLeadChart.datasets"
+												   :totalCount="wonLeadChart.totalCount"
+												   link="/crmreport?type=leads"
+												   :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<DoughnutChart chartTitle="Clients with WON status values"
+												   id="wonLeadChartValue"
+												   :labels="wonLeadChartValue.labels"
+												   :datasets="wonLeadChartValue.datasets"
+												   :totalCount="wonLeadChartValue.totalCount"
+												   link="/crmreport?type=leads"
+												   :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<PieChart chartTitle="Opportunities count by product"
+											  id="leadCountByProductChart"
+											  :labels="leadCountByProductChart.labels"
+											  :datasets="leadCountByProductChart.datasets"
+											  link="/crmreport?type=leads"
+											  :key="refresh"
+											  :isPercentage="true" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<DoughnutChart chartTitle="Sales Activity by Type"
+												   id="taskTypeChart"
+												   :labels="taskTypeChart.labels"
+												   :datasets="taskTypeChart.datasets"
+												   :totalCount="emptyString"
+												   link="/crmreport?type=leads"
+												   :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<PieChart chartTitle="Organizations by status"
+											  id="organizationsByStateCountChart"
+											  :labels="organizationsByStateCountChart.labels"
+											  :datasets="organizationsByStateCountChart.datasets"
+											  :totalCount="organizationsByStateCountChart.totalCount"
+											  link=""
+											  :key="refresh"
+											  :isPercentage="true" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<PieChart chartTitle="Opportunities Money by Stage"
+											  id="leadSumPercentageChart"
+											  :labels="leadSumPercentageChart.labels"
+											  :datasets="leadSumPercentageChart.datasets"
+											  :totalCount="leadSumPercentageChart.totalCount"
+											  link=""
+											  :key="refresh"
+											  :hasMultipleTooltipValues="true" />
+								</div>
+								<div class="col-xl-4 col-lg-6 col-md-10 col-sm-12 mt-30px">
+									<RowsBlockUser title="Opportunites by Users"
+												   :blocks="leadByUserChart" />
+								</div>
+								<div class="col-8 mt-30px">
+									<RowsBlockLeads :blocks="leadByStateAndValue" />
+								</div>
+								<div class="col-12 col-lg-8 mt-30px">
+									<BarChart chartTitle="Opportunities by stage"
+											  id="leadsCountPercentageByStage"
+											  :labels="leadsCountPercentageByStage.labels"
+											  :datasets="leadsCountPercentageByStage.datasets"
+											  link="/crmreport?type=leads"
+											  v-bind:isPercentage="true"
+											  :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-8 mt-30px">
+									<BarChart chartTitle="Opportunities by source"
+											  id="leadsBySourceCountChart"
+											  :labels="leadsBySourceCountChart.labels"
+											  :datasets="leadsBySourceCountChart.datasets"
+											  link="/crmreport?type=leads"
+											  v-bind:isPercentage="true"
+											  :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-8 mt-30px">
+									<BarChart chartTitle="Revenue Channels"
+											  id="leadsBySourceValueChart"
+											  :labels="leadsBySourceValueChart.labels"
+											  :datasets="leadsBySourceValueChart.datasets"
+											  link="/crmreport?type=leads"
+											  v-bind:isPercentage="false"
+											  v-bind:hasCurrency="true"
+											  :key="refresh" />
+								</div>
+
+								<div class="col-12 col-lg-8 mt-30px">
+									<BarChart chartTitle="Opportunities by Technology Type"
+											  id="leadsByTechnologyTypeValueChart"
+											  :labels="leadsByTechnologyTypeValueChart.labels"
+											  :datasets="leadsByTechnologyTypeValueChart.datasets"
+											  link="/crmreport?type=leads"
+											  v-bind:isPercentage="true"
+											  :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<PieChart chartTitle="Money by Technology Type"
+											  id="leadValuesPercentageByTechnologyTypeChart"
+											  :labels="leadValuesPercentageByTechnologyTypeChart.labels"
+											  :datasets="leadValuesPercentageByTechnologyTypeChart.datasets"
+											  :totalCount="leadValuesPercentageByTechnologyTypeChart.totalCount"
+											  link="/crmreport?type=leads"
+											  :key="refresh"
+											  :hasMultipleTooltipValues="true" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<PieChart chartTitle="Opportunities Money WON by Technology Type"
+											  id="wonLeadsValuesByTechnologyTypeValueChart"
+											  :labels="wonLeadsValuesByTechnologyTypeValueChart.labels"
+											  :datasets="wonLeadsValuesByTechnologyTypeValueChart.datasets"
+											  :totalCount="wonLeadsValuesByTechnologyTypeValueChart.totalCount"
+											  link="/crmreport?type=leads"
+											  :key="refresh"
+											  :hasMultipleTooltipValues="true" />
+								</div>
+								<div class="col-12 col-lg-6 col-xl-4 mt-30px">
+									<PieChart chartTitle="Opportunities Money LOST by Technology Type"
+											  id="lostLeadsValuesByTechnologyTypeValueChart"
+											  :labels="lostLeadsValuesByTechnologyTypeValueChart.labels"
+											  :datasets="lostLeadsValuesByTechnologyTypeValueChart.datasets"
+											  :totalCount="lostLeadsValuesByTechnologyTypeValueChart.totalCount"
+											  link="/crmreport?type=leads"
+											  :key="refresh"
+											  :hasMultipleTooltipValues="true" />
+								</div>
+								<div class="col-12 col-lg-8 mt-30px">
+									<LineChart chartTitle="Total opportunities"
+											   id="totalOpportunitiesChart"
+											   :labels="totalOpportunitiesChart.labels"
+											   :datasets="totalOpportunitiesChart.datasets"
+											   link="/crmreport?type=leads"
+											   v-bind:isPercentage="false"
+											   v-bind:hasCurrency="true"
+											   :key="refresh" />
+								</div>
+								<div class="col-12 col-lg-8 mt-30px">
+									<BarChart chartTitle="Opportunites by Employees"
+											  id="leadByEmployee"
+											  :labels="employeeValues.labels"
+											  :datasets="employeeValues.datasets"
+											  link="/crmreport?type=leads"
+											  v-bind:isPercentage="false"
+											  v-bind:hasCurrency="true"
+											  :key="refresh" />
+								</div>
+							</div>
+							<div class="row row-eq-height mt-30px">
+								<div class="col-3">
+									<BlockWithIndices label="WON opportunities" :value="leadsWinLostRate[0] ? leadsWinLostRate[0].wonLeadCountPercentage + ' %' : ''" class="pb-1 h-50" />
+									<BlockWithIndices label="LOST opportunities" :value="leadsWinLostRate[0] ? leadsWinLostRate[0].lostLeadCountPercentage + ' %' : ''" class="pt-1 h-50" />
+								</div>
+								<div class="col-12 col-lg-9">
+									<BarChart chartTitle="Opportunities WIN rate"
+											  id="leadsWinRateByMonthChart"
+											  :labels="leadsWinRateByMonthChart.labels"
+											  :datasets="leadsWinRateByMonthChart.datasets"
+											  link="/crmreport?type=leads"
+											  v-bind:isPercentage="false"
+											  v-bind:hasCurrency="true"
+											  :key="refresh" />
+								</div>
+							</div>
+							<div class="col-12 mt-2 mb-2 p-0">
+								<LeadsAnalysis :title="'Leads Analysis'"
+											   :leadGroups="leadsAnalysisReport" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</script>
+	<script>
+		const utils = {
+			findObjectByPropValue: (array, value, prop) => {
+				return array.find(x => x[prop] === value);
+			},
+			groupBy: (array, key) => {
+				return array.reduce(function (result, x) {
+					(result[x[key]] = result[x[key]] || []).push(x);
+					return result;
+				}, {});
+			},
+			numberFormat(val, decimals) {
+				val = parseFloat(val)
+				return val.toFixed(decimals);
+			},
+			today: new Date().toLocaleDateString(),
+			thisYear: new Date(new Date().getFullYear(), 0, 1),
+			lastYear: new Date(new Date().getFullYear() - 1, 0, 1)
+		}
+		const dashboardConfig = {
+			colorset: [
+				'#2850F0',
+				'#FF2850',
+				'#FFD018',
+				'#20BC40',
+				'#800080',
+				'#d3d3d3',
+				'#00ffff',
+				'#ffa500'
+			],
+			stages: [
+				'Start',
+				'Early intelligence',
+				'New',
+				'Lead',
+				'Quotation',
+				'Negotiation',
+				'Completed',
+				'End'
+			],
+			states: [
+				'Lost',
+				'Won'
+			],
+			pipeLines: [
+				'Government Bids',
+				'Private Business'
+			]
+		}
+		Vue.component('DashboardLeads', {
+			template: "#dashboardLeads-template",
+			data() {
+				return {
+					refresh: 0,
+					pageOptionsComponents: [],
+					pageRequestFilters: [{
+						Propriety: "Period",
+						Value: moment().startOf('month').format('DD.MM.YYYY').toString() + ',' + moment().endOf('month').format('DD.MM.YYYY').toString()
+					}],
+					dataLoaded: false,
+					geoPositions: [],
+					showFilters: false,
+					periods: [
+						{
+							active: false,
+							label: 'Today',
+							value: moment().startOf('day').format('DD.MM.YYYY').toString() + ',' + moment().endOf('day').format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'This week',
+							value: moment().startOf('week').format('DD.MM.YYYY').toString() + ',' + moment().endOf('week').format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'Last week',
+							value: moment().subtract(1, 'weeks').startOf('week').format('DD.MM.YYYY').toString() + ',' + moment().subtract(1, 'weeks').endOf('week').format('DD.MM.YYYY').toString()
+						},
+						{
+							active: true,
+							label: 'This month',
+							value: moment().startOf('month').format('DD.MM.YYYY').toString() + ',' + moment().endOf('month').format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'Last 90 days',
+							value: moment().subtract(90, 'days').format('DD.MM.YYYY').toString() + ',' + moment().format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'Last 180 days',
+							value: moment().subtract(180, 'days').format('DD.MM.YYYY').toString() + ',' + moment().format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'This year',
+							value: moment().startOf('year').format('DD.MM.YYYY').toString() + ',' + moment().endOf('year').format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'Last year',
+							value: moment().subtract(1, 'years').startOf('year').format('DD.MM.YYYY').toString() + ',' + moment().subtract(1, 'years').endOf('year').format('DD.MM.YYYY').toString()
+						},
+						{
+							active: false,
+							label: 'Previous year',
+							value: moment().subtract(2, 'years').startOf('year').format('DD.MM.YYYY').toString() + ',' + moment().subtract(2, 'years').endOf('year').format('DD.MM.YYYY').toString()
+						},
+
+					],
+					leadCountChart: {},
+					newLeadChart: {},
+					wonLeadChart: {},
+					leadStageStart: {},
+					leadStageEarlyIntelligence: {},
+					leadStageNew: {},
+					leadStageLead: {},
+					leadStageQuotation: {},
+					leadStageNegotiation: {},
+					leadByUserChart: [],
+					leadByStateAndValue: [],
+					leadStageCompleted: {},
+					leadStageEnd: {},
+					leadCountByProductChart: {},
+					leadsBySourceCountChart: {},
+					leadsByTechnologyTypeValueChart: {},
+					leadValuesPercentageByTechnologyTypeChart: {},
+					wonLeadsValuesByTechnologyTypeValueChart: {},
+					lostLeadsValuesByTechnologyTypeValueChart: {},
+					leadsWinRateByMonthChart: {},
+					leadsCountPercentageByStage: {},
+					leadsWinLostRate: {},
+					totalOpportunitiesChart: {},
+					leadSumPercentageChart: {},
+					employeeValues: {},
+					taskTypeChart: {},
+					organizationsByStateCountChart: {},
+					users: [],
+					leadsAnalysisReport: [],
+					// pipeLines: [],
+					selectedPipeLines: [],
+					emptyString: "",
+					isAdmin: false
+				}
+			},
+			computed: {
+				clientTMEtotalRender() {
+					let resArray = [];
+					this.clientTMEtotal.forEach(gp => {
+						resArray.push({
+							label: gp.geoPosition,
+							value: gp.value + ' MDL',
+							procent: gp.valueProgress
+						});
+					})
+					return resArray;
+				},
+				clientTStotalQtyRender() {
+					let resArray = [];
+					this.clientTSQtty.forEach(gp => {
+						resArray.push({
+							label: gp.geoPosition,
+							value: gp.value,
+							procent: gp.valueProgress
+						});
+					})
+					return resArray;
+				},
+				clientTStotalPyRender() {
+					let resArray = [];
+					this.clientTSPayments.forEach(gp => {
+						resArray.push({
+							label: gp.geoPosition,
+							value: gp.value + ' MDL',
+							procent: gp.valueProgress
+						});
+					})
+					return resArray;
+				},
+				clientTMECardsRender() {
+					let resArray = [];
+					this.clientTMECards.forEach(gp => {
+						resArray.push({
+							label: gp.geoPosition,
+							value: gp.value,
+							procent: gp.valueProgress
+						});
+					})
+					return resArray;
+				},
+				tableFilters() {
+					if (this.showFilters) {
+						return [
+							{
+								id: 'Period',
+								label: 'Period',
+								radio: true,
+								values: this.periods
+							},
+							{
+								id: 'PipeLine',
+								label: 'PipeLine',
+								values: this.pipeLines
+							},
+						]
+					} else {
+						return null;
+					}
+				},
+				pipeLines() {
+					return this.$store.state.allPipelines;
+				}
+			},
+			beforeCreate() {
+				this.$store.dispatch('getAllPipelines');
+			},
+			created() {
+				this.showFilters = true;
+				this.getData();
+			},
+			methods: {
+				getIndicesFromArray(array, additionalString = null) {
+					let result = [];
+					array.forEach(gp => {
+						result.push({
+							label: gp.geoPosition,
+							value: additionalString ? `${gp.value} ${additionalString}` : gp.value,
+							procent: gp.valueProgress
+						});
+					});
+					return result;
+				},
+				removeDuplicates(arrayData, filterProp, prop, label) {
+					let aux = [];
+					let returnArray = [];
+					let array = arrayData.slice();
+					arrayData.forEach(elem => {
+						if (array.filter(e => e[filterProp] === elem[filterProp]).length > 0) {
+							aux = arrayData.filter(e => e[filterProp] === elem[filterProp]);
+							var value = { label: elem[label], sum: 0, nr: 0};
+							aux.forEach(e => {
+								value.sum = +parseFloat((value.sum + e[prop])).toFixed(2);
+								value.nr = value.nr + 1;
+							})
+							returnArray.push(value);
+							array = array.filter(e => e[filterProp] != elem[filterProp]);
+						}
+					});
+					return returnArray;
+				},
+				removeDuplicateUsersByPipeline(users) {
+					let aux = [];
+					let result = [];
+					let array = users.slice();
+					users.forEach(elem => {
+						if (array.filter(e => e.id === elem.id).length > 0) {
+							aux = users.filter(e => e.id === elem.id);
+							var value = { label: elem.name, sumByPipeline: [] };
+							this.selectedPipeLines.forEach(pipeLine => {
+								let sum = 0;
+								aux.forEach(user => {
+									if (user.pipeline === pipeLine) {
+										sum = sum + user.totalSum;
+									}
+								})
+								value.sumByPipeline.push(sum);
+							})
+							result.push(value);
+							array = array.filter(e => e.id != elem.id);
+						}
+					});
+					var emptyValue = { label: [], sumByPipeline: [] };
+					if (result.length == 0) result.push(emptyValue);
+					return result;
+				},
+				removeDuplicatesByPipeline(arrayData, prop, label) {
+					let aux = [];
+					let result = [];
+					let array = arrayData.slice();
+					arrayData.forEach(elem => {
+						if (array.filter(e => e[label] === elem[label]).length > 0) {
+							aux = arrayData.filter(e => e[label] === elem[label]);
+							var value = { label: elem[label], sumByPipeline: [] };
+							this.selectedPipeLines.forEach(pipeLine => {
+								let sum = 0;
+								aux.forEach(e => {
+									if (e.pipeLine === pipeLine) {
+										sum = sum + e[prop];
+									}
+								})
+								value.sumByPipeline.push(sum);
+							})
+							result.push(value);
+							array = array.filter(e => e[label] != elem[label]);
+						}
+					});
+					var emptyValue = { label: [], sumByPipeline: [] };
+					if (result.length == 0) result.push(emptyValue);
+					return result;
+				},
+				getData() {
+					this.dataLoaded = false;
+					let promises = [
+						customAjaxRequest(apiEndpoints.CrmDashboard.GetLeadDashboardIndices, 'POST', { filters: this.pageRequestFilters }),
+						customAjaxRequest(apiEndpoints.CrmDashboard.GetTaskDashboardIndices, 'POST', { filters: this.pageRequestFilters }),
+						customAjaxRequest(apiEndpoints.CrmDashboard.GetOrganizationDashboardIndices, 'POST', { filters: this.pageRequestFilters }),
+						customAjaxRequest(apiEndpoints.CrmDashboard.GetLeadsAnalysisReport, 'POST', { filters: this.pageRequestFilters }),
+						customAjaxRequest(apiEndpoints.CrmDashboard.GetLeadsByStatusAndValue, 'POST', { filters: this.pageRequestFilters })
+					];
+					Promise.all(promises).then(result => {
+						//Leads indices
+						this.leadCountChart = this.generateDoughnutDataFromArray(result[0].filter(data => data.pipeLine != null && data.stage == null), 'leadCount', 'pipeLine');
+						this.selectedPipeLines = [];
+						this.leadCountChart.labels.forEach(data => {
+							this.selectedPipeLines.push(data.text);
+						});
+						this.leadsCountPercentageByStage = this.generateGroupedBarDataFromArray(this.removeDuplicatesByPipeline(result[0].filter(data => data.stage != null), 'leadCountPercentage', 'stage'), 'sumByPipeline', 'label', true, true);
+						this.leadSumPercentageChart = this.generateDoughnutDataFromArray(this.removeDuplicates(result[0].filter(data => data.stage != null), 'stage', 'leadSum', 'stage'), 'sum', 'label', false, true);
+						let newResult = result[0].filter(data => data.stage == null);
+						this.leadsWinRateByMonthChart = this.generateGroupedBarDataFromArray(newResult.filter(data => data.month != null), 'lostAndWonValues', 'month');
+						this.newLeadChart = this.generateDoughnutDataFromArray(newResult.filter(data => data.pipeLine != null), 'newLead', 'pipeLine');
+						this.wonLeadChart = this.generateDoughnutDataFromArray(newResult.filter(data => data.pipeLine != null), 'wonLead', 'pipeLine');
+						this.wonLeadChartValue = this.generateDoughnutDataFromArray(newResult.filter(data => data.pipeLine != null), 'wonLeadSum', 'pipeLine', false, true);
+						this.leadCountByProductChart = this.generateDoughnutDataFromArray(newResult.filter(data => data.productType != null), 'leadCountPercentage', 'productType', true);
+						this.users = [];
+						result[0].forEach(elem => {
+							elem.leadsByUsers.forEach(user => {
+								this.users.push(user);
+							});
+						});
+						this.employeeValues = this.generateGroupedBarDataFromArray(this.removeDuplicateUsersByPipeline(this.users), 'sumByPipeline', 'label', false, true);
+						this.leadByUserChart = this.removeDuplicates(this.users, 'id', 'totalSum', 'name');
+						this.leadByStateAndValue = result[4];
+						this.leadsBySourceCountChart = this.generateBarDataFromArray(newResult.filter(data => data.source != null), 'leadCountPercentage', 'source', true);
+						this.leadsBySourceValueChart = this.generateBarDataFromArray(newResult.filter(data => data.source != null), 'leadSum', 'source', true);
+						this.leadsByTechnologyTypeValueChart = this.generateBarDataFromArray(newResult.filter(data => data.technologyType != null), 'leadCountPercentage', 'technologyType', true);
+						this.wonLeadsValuesByTechnologyTypeValueChart = this.generateDoughnutDataFromArray(newResult.filter(data => data.technologyType != null && data.technologyType != 'N/A'), 'wonLeadSum', 'technologyType', false, true);
+						this.lostLeadsValuesByTechnologyTypeValueChart = this.generateDoughnutDataFromArray(newResult.filter(data => data.technologyType != null && data.technologyType != 'N/A'), 'lostLeadSum', 'technologyType', false, true);
+						this.leadValuesPercentageByTechnologyTypeChart = this.generateDoughnutDataFromArray(newResult.filter(data => data.technologyType != null && data.technologyType != 'N/A'), 'leadSum', 'technologyType', false, true);
+						this.leadsWinLostRate = newResult.filter(data => data.wonLeadCountPercentage != '0');
+						this.totalOpportunitiesChart = this.generateLineDataFromArray(newResult.filter(data => data.month != null), 'leadSum', 'month');
+						this.taskTypeChart = this.generateDoughnutDataFromArray(result[1], 'countPercentage', 'taskType', true);
+						this.organizationsByStateCountChart = this.generateDoughnutDataFromArray(result[2], 'organizationsCountPercentage', 'state', true);
+						this.leadsAnalysisReport = result[3];
+						//console.log(result[3]);
+						this.dataLoaded = true;
+						this.refresh++;
+					});
+				},
+				getAvg(array, prop) {
+					let avg = 0;
+					let count = 0;
+					let total = 0;
+					array.forEach(e => {
+						total += e[prop];
+						count++;
+					});
+					avg = total / count;
+					return avg;
+				},
+				getTotal(array, prop) {
+					let total = 0;
+					array.forEach(e => {
+						total += e[prop];
+					});
+					return total;
+				},
+				generateDoughnutDataFromArray(arrayData, property, dataName, isInPercentage = false, hasCurrency = false, specifcIds = null) {
+					const propertyProgress = property + 'Progress';
+					let labels = [];
+					let totalCount = 0;
+					let datasets = [{
+						borderWidth: 0,
+						data: [],
+						backgroundColor: []
+					}];
+					const pushToDatasets = (r, i) => {
+						datasets[0].data.push(r[property]);
+						datasets[0].backgroundColor.push(dashboardConfig.colorset[i]);
+					}
+
+					const pushToLabels = (r, i) => {
+						let baseDataSize = 16;
+						let lenData = (r[property].toString().length);
+						let finalDataSize = 16;
+						while (baseDataSize / lenData >= 3) {
+							finalDataSize = finalDataSize + 1.5;
+							lenData++;
+						}
+
+						let baseLabelSize = 11;
+						let lenLabel = (r[dataName].toString().length);
+						let finalLabelSize = 11;
+						while (baseLabelSize / lenLabel >= 0.5) {
+							finalLabelSize = finalLabelSize + 0.4;
+							lenLabel = lenLabel + 7;
+						}
+						labels.push({
+							count: hasCurrency ? r[property] + ' @ViewBag.GlobalCurrency' : isInPercentage ? r[property] + ' %' : r[property],
+							text: r[dataName],
+							color: dashboardConfig.colorset[i],
+							procent: r[propertyProgress],
+							dataFontSize: finalDataSize.toString() + 'px',
+							labelFontSize: finalLabelSize.toString() + 'px',
+						});
+					}
+					let i = 0;
+					arrayData.forEach(r => {
+						if (specifcIds) {
+							pushToLabels(r, i);
+							pushToDatasets(r, i);
+							totalCount += r[property];
+							i++;
+						} else if (!specifcIds) {
+							pushToLabels(r, i);
+							pushToDatasets(r, i);
+							totalCount += r[property];
+							i++;
+						}
+					});
+					return {
+						labels,
+						datasets,
+						totalCount
+					}
+				},
+				generateBarDataFromArray(arrayData, property, dataName, isInPercentage = false, specifcIds = null) {
+					let labels = [];
+					let i = 0;
+					let datasets = [{
+						borderWidth: 0,
+						data: [],
+						label: [],
+						backgroundColor: [],
+						maxBarThickness: 30,
+						minBarLength: 2,
+					}];
+					const pushToDatasets = (r, i) => {
+						datasets[0].data.push(r[property]);
+						datasets[0].backgroundColor.push(dashboardConfig.colorset[0]);
+					}
+
+					const pushToLabels = (r, i) => {
+						labels.push({
+							count: isInPercentage ? r[property] + ' %' : r[property],
+							text: r[dataName],
+							color: dashboardConfig.colorset[i],
+						});
+					}
+					arrayData.forEach(r => {
+						pushToLabels(r, i);
+						pushToDatasets(r, i);
+						i++;
+					});
+					return {
+						labels,
+						datasets
+					}
+				},
+				generateGroupedBarDataFromArray(arrayData, property, dataName, isInPercentage = false, byPipeline = false, specifcIds = null) {
+					let labels = [];
+					let i = 0;
+					let datasets = [];
+					let j = 0;
+					arrayData[0][property].forEach(value => {
+						datasets[j] = {
+							label: !byPipeline ? dashboardConfig.states[j] : dashboardConfig.pipeLines[j],
+							maxBarThickness: 40,
+							minBarLength: 2,
+							backgroundColor: dashboardConfig.colorset[j],
+							data: []
+						}
+						j++;
+					});
+
+					const pushToDatasets = (r, i) => {
+						j = 0;
+						r[property].forEach(value => {
+
+							datasets[j].data.push(value);
+							j++;
+						});
+					}
+
+					const pushToLabels = (r, i) => {
+						labels.push({
+							count: isInPercentage ? r[property] + ' %' : r[property],
+							text: r[dataName],
+							color: dashboardConfig.colorset[i],
+						});
+					}
+					arrayData.forEach(r => {
+						pushToLabels(r, i);
+						pushToDatasets(r, i);
+						i++;
+					});
+					return {
+						labels,
+						datasets
+					}
+				},
+				generateLineDataFromArray(arrayData, property, dataName, specifcIds = null) {
+					let labels = [];
+					let i = 0;
+					let datasets = [{
+						borderWidth: 0,
+						data: [],
+						label: [],
+						backgroundColor: [],
+						maxBarThickness: 50,
+						minBarLength: 2,
+						fill: false,
+						lineTension: 0.2,
+						borderColor: dashboardConfig.colorset[0],
+					}];
+					const pushToDatasets = (r, i) => {
+						datasets[0].data.push(r[property]);
+						datasets[0].backgroundColor.push(dashboardConfig.colorset[0]);
+					}
+
+					const pushToLabels = (r, i) => {
+						labels.push({
+							count: r[property],
+							text: r[dataName],
+							color: dashboardConfig.colorset[i],
+						});
+					}
+					arrayData.forEach(r => {
+						pushToLabels(r, i);
+						pushToDatasets(r, i);
+						i++;
+					});
+					return {
+						labels,
+						datasets
+					}
+				},
+				convertWCToSelectList(array) {
+					return array.map(e => {
+						const newObj = {
+							label: e.name,
+							value: e.id,
+							active: false
+						}
+						return newObj;
+					});
+				},
+				convertPipeLinesToSelectList(array) {
+					return array.map(e => {
+						const newObj = {
+							label: e.name,
+							value: e.id,
+							active: false
+						}
+						return newObj;
+					});
+				},
+				filterResult(val) {
+					this.pageRequestFilters = [];
+					val.forEach(f => {
+						f.values.forEach(v => {
+							if (v.active) {
+								let fValue = v.value;
+								this.pageRequestFilters.push({
+									Propriety: f.id,
+									Value: fValue
+								});
+							}
+						});
+					});
+					this.tableKey++;
+				},
+				generateDoughnutDataFromClientsArray(arrayData, property, specifcIds = null) {
+					const pushToDatasets = (r, i) => {
+						datasets[0].data.push(r);
+						datasets[0].backgroundColor.push(dashboardConfig.colorset[i]);
+					}
+					const pushToLabels = (r, i) => {
+						labels.push({
+							count: r.name,
+							text: r.count + ' MDL',
+							color: dashboardConfig.colorset[i],
+						});
+					}
+					let selectedData = [];
+					let labels = [];
+					let totalCount = 0;
+					let datasets = [{
+						borderWidth: 0,
+						data: [],
+						backgroundColor: []
+					}];
+
+					arrayData.forEach(r => {
+						if (specifcIds || !specifcIds) {
+							selectedData = selectedData.concat(r[property]);
+						}
+					});
+
+					const groupedData = utils.groupBy(selectedData, 'geoPosition');
+
+					let i = 0;
+					for (item in groupedData) {
+						let totalValue = 0;
+						groupedData[item].forEach(v => totalValue += v.value);
+						pushToLabels({
+							count: totalValue,
+							name: item
+						}, i);
+						pushToDatasets(totalValue, i);
+						totalCount += totalValue;
+						i++;
+					}
+
+					return {
+						labels,
+						datasets,
+						totalCount: utils.numberFormat(totalCount, 2) + ' MDL'
+					}
+				},
+				convertWCToSelectList(array) {
+					return array.map(e => {
+						const newObj = {
+							label: e.name,
+							value: e.id,
+							active: false
+						}
+						return newObj;
+					});
+				},
+			},
+			watch: {
+				pageRequestFilters: {
+					deep: true,
+					handler() {
+						this.getData();
+					}
+				}
+			}
+		});
+	</script>
+}

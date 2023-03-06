@@ -1,0 +1,246 @@
+@{
+	ViewData["Title"] = "Edit Account";
+}
+
+<EditAccount />
+<ChangePassword />
+
+@section Scripts {
+	<script src="~/themes/gear/js/components/form-controls/input.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/datepicker.js"></script>
+	<script>
+		const datePickerFormat = 'yyyy/mm/dd';
+		Vue.component('EditAccount', {
+			template: `
+								<div class="d-flex pb-2">
+									<form id="account-update" class="card col-12 col-md-4 pt-4 ml-40px" @@submit.prevent="updateAccount">
+										<Input
+											id="userFirstName"
+											label="First Name"
+											type="text"
+											:required="true"
+											:value="requestData.userFirstName"
+											:validator="nameValidator"
+											:validatorInput="inputNameValidation"
+											@@newValue="newValue"
+										/>
+										<Input
+											id="userLastName"
+											label="Last Name"
+											type="text"
+											:required="true"
+											:value="requestData.userLastName"
+											:validator="nameValidator"
+											:validatorInput="inputNameValidation"
+											@@newValue="newValue"
+										/>
+										<Input
+											id="email"
+											label="Email Address"
+											type="text"
+											:required="true"
+											:value="requestData.email"
+											:validator="emailValidator"
+											:validatorInput="inputEmailValidation"
+											@@newValue="newValue"
+										/>
+										<Input
+											id="phone"
+											label="Phone Number"
+											type="text"
+											:required="false"
+											:value="requestData.phoneNumber"
+											:validator="phoneValidator"
+											:validatorInput="inputPhoneValidation"
+											@@newValue="newValue"
+										/>
+										<Datepicker
+											id="birthday"
+											label="Birthday"
+											:required="false"
+											:value="requestData.birthday"
+											:format="datePickerFormat"
+											@@newValue="newValue"
+										/>
+										<div class="d-flex">
+											<Button
+												label="Update"
+												btnType="success"
+												btnDOMType="submit"
+												className="ml-auto mb-3"
+												:waiting="waitingButton"
+											/>
+										</div>
+									</form>
+								</div>
+							`,
+			data() {
+				return {
+					waitingButton: false,
+					datePickerFormat: 'yyyy/mm/dd',
+					requestData: {
+						userId: null,
+						userFirstName: null,
+						userLastName: null,
+						birthday: null,
+						phoneNumber: null,
+						email: null
+					}
+				}
+			},
+			created() {
+				this.$store.dispatch('getCurrenctUserInfo');
+				this.getUserData();
+			},
+			computed: {
+				getCurrentUserInfo() {
+					return this.$store.state.userInfo;
+				}
+			},
+			methods: {
+				getUserData() {
+					this.requestData = this.getCurrentUserInfo;
+					this.requestData.userId = this.getCurrentUserInfo.id;
+
+				},
+				newValue(val) {
+					this.requestData[val.id] = val.value;
+				},
+				updateAccount() {
+					this.waitingButton = true;
+					customAjaxRequest(apiEndpoints.Users.UpdateAccountInformation, 'POST', this.requestData).then(() => {
+						this.requestData = {
+							userId: null,
+							userFirstName: null,
+							userLastName: null,
+							birthday: null,
+							phoneNumber: null,
+							email: null
+						}
+					}).catch(e => {
+						toast.notifyErrorList(e);
+					}).finally(() => {
+						this.waitingButton = false;
+						window.location.href = '/account/account';
+					});
+				},
+				nameValidator(value) {
+					return fieldValidationFunc(value, 'varChar50');
+				},
+				inputNameValidation(value) {
+					return fieldValidationInputFunc(value, 'varChar50');
+				},
+				emailValidator(value) {
+					return fieldValidationFunc(value, 'email');
+				},
+				inputEmailValidation(value) {
+					return fieldValidationInputFunc(value, 'email');
+				},
+				phoneValidator(value) {
+					return fieldValidationFunc(value, 'phone');
+				},
+				inputPhoneValidation(value) {
+					return fieldValidationInputFunc(value, 'phone');
+				},
+			}
+		});
+	</script>
+	<script>
+		Vue.component('ChangePassword', {
+			template: `
+							<div class="d-flex">
+								<form id="password-update" class="card col-12 col-md-4 pt-4 ml-40px" @@submit.prevent="updatePassword">
+									<Input
+										id="currentPassword"
+										label="Current password"
+										type="password"
+										:required="true"
+										:value="requestData.currentPassword"
+										@@newValue="newValue"
+									/>
+									<Input
+										id="password"
+										label="New password"
+										type="password"
+										:required="true"
+										:value="requestData.password"
+										:validator="passwordValidator"
+										:validatorInput="fieldValidationInputFunc"
+										@@newValue="newValue"
+									/>
+									<Input
+										id="repeatPassword"
+										label="Repeat password"
+										type="password"
+										:required="true"
+										:value="requestData.repeatPassword"
+										:validator="repeatPasswordValidator"
+										@@newValue="newValue"
+									/>
+									<div class="d-flex">
+										<Button
+											label="Update"
+											btnType="success"
+											btnDOMType="submit"
+											className="ml-auto mb-3"
+											:waiting="waitingButton"
+										/>
+									</div>
+								</form>
+							</div>
+						`,
+			data() {
+				return {
+					waitingButton: false,
+					requestData: {
+						userId: null,
+						currentPassword: null,
+						password: null,
+						repeatPassword: null
+					}
+				}
+			},
+			created() {
+				this.$store.dispatch('getCurrenctUserInfo');
+				this.getUserData();
+			},
+			computed: {
+				getCurrentUserInfo() {
+					return this.$store.state.userInfo;
+				}
+			},
+			methods: {
+				getUserData() {
+					this.requestData.userId = this.getCurrentUserInfo.id;
+				},
+				newValue(val) {
+					this.requestData[val.id] = val.value;
+				},
+				updatePassword() {
+					this.waitingButton = true;
+					customAjaxRequest(apiEndpoints.Users.ChangePassword, 'POST', this.requestData).then(() => {
+						this.requestData = {
+							userId: null,
+							currentPassword: null,
+							password: null,
+							repeatPassword: null
+						}
+					}).catch(e => {
+						toast.notifyErrorList(e);
+					}).finally(() => {
+						this.waitingButton = false;
+					});
+				},
+				passwordValidator(value) {
+					return fieldValidationFunc(value, 'password');
+				},
+				fieldValidationInputFunc(value) {
+					return fieldValidationFunc(value, 'password');
+				},
+				repeatPasswordValidator(value) {
+					return value === this.requestData.password ? true : window.translate('system_field_invalid_repeat_password');
+				}
+			}
+		});
+	</script>
+}

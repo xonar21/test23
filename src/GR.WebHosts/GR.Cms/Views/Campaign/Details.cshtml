@@ -1,0 +1,134 @@
+@using GR.Crm.Marketing.Abstractions.ViewModels.CampaignsViewModels;
+@model GetCampaignViewModel
+
+@{
+	ViewData["Title"] = Model.Name;
+		}
+<CampaignDetails />
+@section Scripts {
+	<script src="~/themes/gear/js/components/modal.js"></script>
+	<script src="~/themes/gear/js/components/textBlock.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/textarea.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/input.js"></script>
+	<script src="~/themes/gear/js/components/form-controls/select.js"></script>
+	<script src="~/themes/gear/js/modalForms/editCampaignModalForm.js"></script>
+
+	<script type="text/x-template" id="page-template">
+		<div class="col-lg-6 bg-white border rounded py-15 px-20 ml-40px">
+			<div class="d-flex">
+				<h6>@Localizer["details_overview"]</h6>
+				<div class="ml-auto">
+					<a href="#" class="details-page-actions" data-toggle="dropdown">
+						<i data-feather="more-vertical"></i>
+					</a>
+					<div class="dropdown-menu">
+						<a class="dropdown-item" @@click="openModal" href="#">Edit</a>
+					</div>
+				</div>
+			</div>
+			<hr class="hr-description">
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">@Localizer["system_details_name"]</p>
+				</div>
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.Name</p>
+				</div>
+			</div>
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">@Localizer["system_campaign_cost"]</p>
+				</div>
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.CampaignCost</p>
+				</div>
+			</div>
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">@Localizer["system_campaign_budget"]</p>
+				</div>
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.CampaignBudget</p>
+				</div>
+			</div>
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">@Localizer["system_campaign_start_date"]</p>
+				</div>
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.StartDate</p>
+				</div>
+			</div>
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">@Localizer["system_campaign_end_date"]</p>
+				</div>
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.EndDate</p>
+				</div>
+			</div>
+
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">@Localizer["system_campaign_type"]</p>
+				</div>
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.CampaignType.Name</p>
+				</div>
+			</div>
+			<h6 class="mt-3">@Localizer["details"]</h6>
+			<hr class="hr-description">
+			<div class="row no-gutters">
+				<div class="col-fixed-220">
+					<p class="p-sm mb-0">Associated Marketing Lists</p>
+				</div>
+				<div class="row">
+					@foreach (var member in Model.MarketingLists)
+					{
+
+						<div class="d-block mb-sm-0 mb-1 col-12">
+							<p class="p-sm mb-0 color-black">@member.MarketingList.Name</p>
+						</div>
+					}
+				</div>
+			</div>
+			<h6 class="mt-3">@Localizer["details_description"]</h6>
+			<hr class="hr-description">
+			<div class="row no-gutters">
+				<div class="d-block mb-sm-0 mb-1">
+					<p class="p-sm mb-0 color-black">@Model.Description</p>
+				</div>
+			</div>
+			
+			<EditCampaignModalForm ref="modals" @@action="modalAction" />
+		</div>
+	</script>
+	<script>
+		console.log();
+		Vue.component('CampaignDetails', {
+			template: '#page-template',
+			beforeCreate() {
+				const breadcrumbs = [
+					'',
+					'<a href="/campaign">Campaigns</a>',
+					`@Model.Name`
+				]
+				this.$store.dispatch("setCustomBreadcrumbsAction", breadcrumbs);
+			},
+			mounted() {
+				feather.replace({
+					width: 17,
+					height: 17,
+				});
+			},
+			methods: {
+				openModal() {
+					this.$refs['modals'].editCampaign('@Model.Id');
+				},
+				modalAction() {
+					location.reload();
+				}
+			}
+		});
+	</script>
+}

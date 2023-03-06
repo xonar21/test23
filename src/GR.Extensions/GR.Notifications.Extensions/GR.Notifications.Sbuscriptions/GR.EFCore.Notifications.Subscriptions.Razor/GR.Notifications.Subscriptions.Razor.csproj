@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\GR.Core.Extension\GR.Core\GR.Core.csproj" />
+    <ProjectReference Include="..\..\..\GR.Identity.Extension\GR.Identity.Abstractions\GR.Identity.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\GR.UI.Menu.Extension\GR.UI.Menu.Abstractions\GR.UI.Menu.Abstractions.csproj" />
+    <ProjectReference Include="..\GR.Notifications.Subscriptions.Abstractions\GR.Notifications.Subscribe.Abstract.csproj" />
+  </ItemGroup>
+</Project>

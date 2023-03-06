@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "provider": "unpkg",
+      "library": "jsplumb@2.15.6",
+      "destination": "wwwroot/lib/jsPlumb/",
+      "files": [
+        "dist/js/jsplumb.min.js",
+        "dist/js/jsplumb.js",
+        "css/jsplumbtoolkit-defaults.css"
+      ]
+    }
+  ]
+}

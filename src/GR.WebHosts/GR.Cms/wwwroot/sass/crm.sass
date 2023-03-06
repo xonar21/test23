@@ -1,0 +1,288 @@
+@import '_table'
+@import '_override'
+
+header
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  z-index: 2
+
+.stages
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr))
+
+.form-control
+  &_default
+    min-height: 150px
+
+  &_small
+    min-height: 42px
+    overflow-y: hidden
+
+.comment
+  &__create-btn
+    background-image: url("../../themes/gear/img/tag.svg")
+    min-height: 24px
+    min-width: 24px
+    border: none
+    cursor:pointer
+    outline: none
+
+  &__dotted-link
+    top: -1px
+
+  &__subcomment
+    margin-left: 20px
+
+  [aria-expanded] &__chevron
+    transition: all 0.2s ease-in-out
+    cursor: pointer
+
+  [aria-expanded=true] &__chevron
+    transform: rotate(-180deg)
+
+  [aria-expanded=false] &__chevron
+    transform: rotate(0deg)
+
+.audit
+  &__user-img
+    margin-right: 10px
+
+hr.hr
+  &_audit
+    margin-top: 15px
+    margin-bottom: 10px
+
+.font-size-12
+  font-size: 12px
+  line-height: 15px
+
+.font-size-14
+  font-size: 14px
+  line-height: 20px
+
+.word-wrap
+  word-wrap: break-word
+
+.line-height-12
+  line-height: 12px
+
+.color-secondary
+  color: #707880
+
+.dropdown-menu
+  padding: 10px 0
+
+  .dropdown-item
+    font-size: 14px
+    padding: 5px 20px
+
+  .dropdown-divider
+    margin: 5px 0
+
+.textarea
+  &_shadow
+    max-height: 0
+    height: 0
+    pointer-events: none
+    opacity: 0
+    margin: 0
+    overflow: hidden
+    resize: none
+
+.font-weight-600
+  font-weight: 600
+
+.overflow-hidden
+  overflow: hidden
+
+.pipeline
+  &-grid
+    margin-top: 10px
+    margin-left: 0
+    margin-right: 0
+
+  &-section
+    &:not(:last-child)
+      border-right: 1px solid #DCE0E4
+
+  &-header
+    border-bottom: 1px solid #DCE0E4
+    border-top: 1px solid #DCE0E4
+    padding: 10px 20px
+    text-align: center
+
+    &__info
+      display: flex
+      justify-content: space-between
+      font-size: 12px
+      line-height: 15px
+      color: #808890
+
+  &-list
+    &:first-child
+      .pipeline-opportunity
+        margin-left: 20px
+
+  &-opportunity
+    background: white
+    border-radius: 8px
+    border: 1px solid #DCE0E4
+    margin: 10px
+    padding: 15px 20px
+    line-height: 18px
+
+    &__info
+      p
+        font-size: 14px
+        line-height: 16px
+        margin-bottom: 5px
+      img, svg
+        vertical-align: text-top
+        width: 16px
+        height: 16px
+        margin-right: 0.25rem
+
+    hr.pipeline-opportunity__hr
+      margin-top: 15px
+      margin-bottom: 15px
+
+    &__link
+      font-size: 14px
+      font-weight: 600
+      margin-bottom: 5px
+      display: inline-block
+
+  &-footer
+    display: flex
+    align-items: center
+
+.select-filters
+  .bootstrap-select
+    min-width: 140px
+    width: initial !important
+
+    &:not(:last-child)
+      margin-right: 10px
+
+    .dropdown-toggle .filter-option-inner-inner
+      padding-top: 3px
+
+  .datepicker
+    border: 1px solid #DCE0E4
+    max-width: 120px
+    padding: 4px 10px
+    font-size: 14px
+
+    &:not(:last-child)
+      margin-right: 10px
+
+.mod
+  &-select
+    .bootstrap-select .dropdown-toggle
+      max-width: 220px
+
+.bs-searchbox + .bs-actionsbox
+  padding-top: 4px
+
+.mb-n-20
+  margin-bottom: -20px
+
+.mr-4px
+  margin-right: 4px
+
+.mr-1px
+  margin-right: 1px
+
+.grid-badge
+  &__item
+    width: 6px
+    height: 6px
+    border-radius: 50%
+    display: inline-block
+    vertical-align: middle
+    
+  &__text
+    color: #808890
+    font-size: 12px
+
+.btn-rounded
+  padding: 0px
+  border-radius: 50%
+  height: 35px
+  width: 35px
+
+  /* The switch - the box around the slider
+
+label.switch
+  position: relative
+  display: inline-block
+  width: 32px
+  height: 16px
+  margin-bottom: 0px
+  margin-right: 0.25rem
+
+  input
+    opacity: 0
+    width: 0
+    height: 0
+
+/* Hide default HTML checkbox
+
+/* The slider
+
+.slider
+  position: absolute
+  cursor: pointer
+  top: 0
+  left: 0
+  right: 0
+  bottom: 0
+  background-color: #ccc
+  -webkit-transition: .4s
+  transition: .4s
+
+  &:before
+    position: absolute
+    content: ""
+    height: 11px
+    width: 11px
+    left: 3px
+    background-color: white
+    -webkit-transition: .4s
+    transition: .3s
+    top: 50%
+    transform: translateY(-50%)
+
+input
+  &:checked + .slider
+    background-color: #2046D4
+
+  &:checked + .slider:before
+    left: 18px
+
+/* Rounded sliders
+
+.slider.round
+  border-radius: 34px
+
+  &:before
+    border-radius: 50%
+
+.lead-description
+  p
+    margin-bottom: 0px
+    font-size: 14px
+
+body:not(.modal-open)
+  padding-right: 0px !important
+
+.footer-panel
+  position: absolute
+  left: 32px
+  right: 0
+  transition: 0.3s ease-in-out
+
+.left-sidebar.open ~ .main-content .footer-panel
+  left: 280px
