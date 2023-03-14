@@ -1,0 +1,19 @@
+{
+  "table": {
+    "columns": {
+      "likes": "Like-uri",
+      "owner": "Autor",
+      "publishDate": "Data publicării",
+      "text": "Text",
+      "tags": "Cuvinte cheie"
+    }
+  },
+  "createPost": "Crează articol",
+  "updatePost": "Modifică articol",
+  "deletePost": "Șterge articol",
+  "deletePostConfirmation": "Doriți să ștergeți acest articol?",
+  "snackbar": {
+    "saved": "Salvat cu succes.",
+    "deleted": "Șters cu suscces."
+  }
+}

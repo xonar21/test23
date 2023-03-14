@@ -1,0 +1,75 @@
+{
+  "brandName": "CEC ITSS ESL",
+  "language": "Limba",
+  "locales": {
+    "en": "English",
+    "ro": "Română",
+    "ru": "Русский"
+  },
+  "routes": {
+    "home": "Principala",
+    "posts": "Articole"
+  },
+  "save": "Salvează",
+  "close": "Închide",
+  "cancel": "Anulează",
+  "confirm": "Confirmă",
+  "readDocs": "Citește Documentația",
+  "auth": {
+    "login": "Logare",
+    "register": "Înregistrare",
+    "logout": "Delogare",
+    "email": "Email",
+    "password": "Parola",
+    "redirectFrom": {
+      "login": "Nu am cont",
+      "register": "Deja am cont"
+    },
+    "successfulLogin": "Logare reusita"
+  },
+  "yup": {
+    "mixed": {
+      "default": "${path} nu este valid",
+      "required": "${path} este un câmp obligatoriu",
+      "oneOf": "${path} trebuie să conțină una dintre următoarele valori: ${values}",
+      "notOneOf": "${path} nu poate conține următoarele valori: ${values}",
+      "defined": "${path} trebuie să fie definit"
+    },
+    "string": {
+      "length": "Lungimea ${path} trebuie să fie exact ${length} caractere",
+      "min": "Lungimea ${path} trebuie să fie minim ${min} caractere",
+      "max": "Lungimea ${path} trebuie să fie maxim ${max} caractere",
+      "matches": "${path} trebuie să corespundă expresiei: \"${regex}\"",
+      "email": "${path} trebuie să fie un email valid",
+      "url": "${path} trebuie să fie un URL valid",
+      "uuid": "${path} trebuie să fie un UUID valid",
+      "trim": "${path} nu poate conține spațiu la capete",
+      "lowercase": "${path} trebuie să conțină doar litere minuscule",
+      "uppercase": "${path} trebuie să conțină doar litere majuscule"
+    },
+    "number": {
+      "min": "${path} trebuie să fie mai mare sau egal ca ${min}",
+      "max": "${path} trebuie să fie mai mic sau egal ca ${max}",
+      "lessThan": "${path} trebuie să fie mai mic ca ${less}",
+      "moreThan": "${path} trebuie să fie mai mare ca ${more}",
+      "positive": "${path} trebuie să fie un număr pozitiv",
+      "negative": "${path} trebuie să fie un număr negativ",
+      "integer": "${path} trebuie să fie un număr întreg"
+    },
+    "date": {
+      "min": "${path} trebuie să urmeze după ${min}",
+      "max": "${path} trebuie să fie până la ${max}"
+    },
+    "boolean": {
+      "isValue": "Câmpul ${path} trebuie să fie ${value}"
+    },
+    "object": {
+      "noUnknown": "${path} are chei nespecificate: ${unknown}"
+    },
+    "array": {
+      "min": "${path} trebuie să conțină minim ${min} elemente",
+      "max": "${path} trebuie să conțină maxim ${max} elemente",
+      "length": "${path} trebuie să conțină exact ${length} elemente"
+    }
+  }
+}

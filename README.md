@@ -1,325 +1,224 @@
- Bizon360.CRM   
-===========
+# CEC ITSS ESL
 
-The information system is intended to automate the beneficiary's sales processes by means of storage, management and reporting modules for the beneficiary's customers.
+## Technologies
 
-Managing the activity of sales managers, monitoring their efficiency through KPI and a notification function for all actors to increase their productivity and efficiency. As well as providing the necessary information for the exercise of verification and control duties by responsible persons.
+This application includes technologies and features as:
 
-# Environment settings
+- **React 17** - A JavaScript library for building reactive user interfaces.
+- **Next.js 12** - framework enabling React apps functionalities such as server-side rendering.
+- **TypeScript** - Adds static type definitions to JavaScript code.
+- **Redux Toolkit** - Toolset for efficient Redux development.
+- **Babel** - Transpiler to different versions of EcmaScript.
+- **Jest** - Testing framework.
+- **ESLint** - Static code analysis tool for identifying problematic patterns found in JavaScript code.
+- **Prettier** - An opinionated code formatter.
+- **EditorConfig** - Maintains consistent coding styles for developers working on the same project across various IDEs.
+- **Axios** - Promise based HTTP client for the browser and node.js.
+- **i18next** - Lightweight simple translation module with dynamic JSON storage.
+- **SASS** - CSS with superpowers.
+- **Material UI** - Provides a robust, customizable, and accessible library of foundational and advanced components.
 
-  # Development
+### **IMPORTANT**: Recommended Node.js version: **^16.15.0**
 
-  Jenkins CI/CD pipeline: http://192.168.1.51:8080/job/dotnet-dev-bizon360crm/
+## Setup and Scripts
 
-  SonarQube: http://192.168.1.50/dashboard?id=dotnet-dev-bizon360crm
+> **Install** all the dependencies before starting the application
 
-  URL: https://bizon360crm.dev.indrivo.com
+```sh
+npm install
+```
 
-# Tehnologies
-.NET CORE 2.2, C#, MVC, JQuery, PostgreSql database, PgAdmin, javascript native, javascript Prototype, SweetAlert2, Libman, Razor View Libraries, Modular Arhitecture, Entity Framework, Bootstrap 4, .Net Standard, Nginx, IIS, Kestrel
+> **Run** the project for local development.
 
-# Compatibility
-The framework is cross platform, thanks .net core, is compatible with Windows, Linux distributive and Mac OS.
+```sh
+npm run dev
+```
 
-### Windows OS Requirements
-To start the app you need the following packages installed:
-- [.Net Core SDK 2.2.402] - C# cross platform framework
-- [Redis] - Distributed cache soft
-- [Pg Admin 4] - Postgres manager for interact with database
-- [PostgreSql] - Database provider
-- [Libman] - UI packages provider
+> **Build** the project for a production environment.
 
-### Ubuntu 18.04 or another OS Requirements
-To start the app you need the following packages installed:
-- [.Net Core SDK 2.2.402](https://docs.microsoft.com/en-us/dotnet/core/install/linux-package-manager-ubuntu-1804) - C# cross platform framework, [optional link](https://www.techrepublic.com/article/how-to-install-dotnet-core-on-ubuntu-18-04/)
-- [Redis](https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04) - Distributed cache soft
-- [Pg Admin 4](https://www.howtoforge.com/tutorial/how-to-install-postgresql-and-pgadmin4-on-ubuntu-1804-lts/) - Postgres manager for interact with database
-- [PostgreSql](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-18-04) - Database provider
-- [Libman] - UI packages provider
+```sh
+npm run build
+```
 
-`Note`: For other OS supported by .net core, consult internet sources
+> **Run** the production server.
 
-# Installation
+```sh
+npm run start
+```
 
-The app can be started using 3 environments:
-- `Development` - is used for development purpose
-- `Stage` - is used on pre- production
-- `Production` - is used for clients, on server side
+> **Lint** your code.
 
-`NOTE`: For development use Development env
-`NOTE`: Each configuration corresponds to a configuration file, like this: `appsettings.{Env}.json`
+```sh
+npm run lint
+```
 
-Structure of appssetings file: 
-```json
-{
-  "SystemConfig": {
-    "MachineIdentifier": ".GR.Prod"
+> Run **tests** in the interactive mode.
+
+```sh
+npm test
+```
+
+> Run **tests** and generate a coverage report.
+
+```sh
+npm run test:cov
+```
+
+## Environment variables
+
+This project can consume variables declared in the environment as if they were declared locally in the JS files. By default you will have **NODE_ENV** defined for you, and any other environment variables starting with **NEXT_PUBLIC**.
+
+#### Setting a variable
+
+> .env.development
+
+```sh
+NEXT_PUBLIC_API_URL=https://dummyapi.io/data/v1/
+```
+
+#### Consuming a variable
+
+> Accessing **process.env**
+
+```js
+this.baseUrl = process.env.NEXT_PUBLIC_API_URL;
+```
+
+_Read more: [[Adding Custom Environment Variables]][adding-custom-environment-variables]_
+
+## Localization
+
+**next-i18next** is a plugin that allows you to get translations up and running quickly and easily, while fully supporting SSR, multiple namespaces with codesplitting.
+The translations of custom text messsages will be stored in each language's own separate folder.<br/>
+
+> Example translation folder structure:
+
+```
+.
+└── static
+    └── locales
+        ├── en
+        |   └── common.json
+        ├── ro
+            └── common.json
+```
+
+> i18n.config.js
+
+```js
+const path = require("path");
+
+module.exports = {
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "ro"],
   },
-  "ConnectionStrings": {
-    "Provider": "Npgsql.EntityFrameworkCore.PostgreSQL",
-    "ConnectionString": "Host=127.0.0.1;Port=5432;Username=postgres;Password=bizon360crm;Persist Security Info=true;Database=Bizon360Crm;MaxPoolSize=1000;"
-  },
-  "Logging": {
-    "IncludeScopes": false,
-    "LogLevel": {
-      "Default": "Error"
-    }
-  },
-  "HealthCheck": {
-    "Timeout": 3,
-    "Path": "/health"
-  },
-  "LocalizationConfig": {
-    "Languages": [
-      {
-        "IsDisabled": false,
-        "Identifier": "en",
-        "Name": "English"
-      },
-      {
-        "IsDisabled": false,
-        "Identifier": "ro",
-        "Name": "Romanian"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "ru",
-        "Name": "Russian"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "it",
-        "Name": "Italian"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "fr",
-        "Name": "French"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "de",
-        "Name": "German"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "uk",
-        "Name": "Ukrainian"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "ja",
-        "Name": "Japanese"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "zh",
-        "Name": "Chinese"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "el",
-        "Name": "Greek"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "nl",
-        "Name": "Dutch"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "pl",
-        "Name": "Polish"
-      },
-      {
-        "IsDisabled": true,
-        "Identifier": "es",
-        "Name": "Spanish"
-      }
-    ],
-    "Path": "Localization",
-    "SessionStoreKeyName": "lang",
-    "DefaultLanguage": "en"
-  },
-  "IsConfigured": true,
-  "LdapSettings": {
-    "ServerName": "",
-    "ServerPort": 389,
-    "UseSSL": false,
-    "Credentials": {
-      "DomainUserName": "",
-      "Password": ""
+  localePath: path.resolve("./public/locales"),
+};
+```
+
+#### Usage
+
+> Page component
+
+```tsx
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale as string, ["common"], i18nConfig)),
     },
-    "SearchBase": "",
-    "ContainerName": "",
-    "DomainName": "",
-    "DomainDistinguishedName": ""
-  },
-  "WebClients": {
-    "CORE": {
-      "uri": "http://159.69.195.160:6969"
+  };
+};
+```
+
+> Functional component
+
+```tsx
+import React from "react";
+import { useTranslation } from "next-i18next";
+
+const Component = () => {
+  const { t } = useTranslation(["common"]);
+
+  return <div>{t("hello")}</div>;
+};
+```
+
+_Read more: [[Official documentation and detailed usage of next-i18next]][i18next-documentation]_
+
+## Redux with Next.js
+
+Setting up Redux for static apps is rather simple: a single Redux store has to be created that is provided to all pages.
+
+When Next.js static site generator or server side rendering is involved, however, things start to get complicated as another store instance is needed on the server to render Redux-connected components.
+
+Therefore, this app uses **next-redux-wrapper**. It automatically creates the store instances for you and makes sure they all have the same state.
+<br/>
+
+#### Usage
+
+> Page component
+
+```tsx
+export const getServerSideProps: GetServerSideProps = reduxWrapper.getServerSideProps(
+  async ({ dispatch }) =>
+    await dispatch(/* your action */);
+
+    (ctx) => {
+      return {
+        props: {},
+      };
     },
-    "BPMApi": {
-      "uri": "http://159.69.195.160:6969"
-    }
-  },
-  "RedisConnection": {
-    "Host": "127.0.0.1",
-    "Port": "6379"
-  },
-  "BackupSettings": {
-    "Enabled": false,
-    "UsePostGreSql": false,
-    "UseMsSql": false,
-    "BackupFolder": "ISODMS",
-    "Interval": "24",
-    "PostGreSqlBackupSettings": {
-      "PgDumpPath": "C:\\Program Files\\PostgreSQL\\11\\bin\\pg_dump.exe",
-      "Host": "localhost",
-      "Port": "5432",
-      "User": "postgres",
-      "Password": "1111",
-      "Database": "ISODMS.PROD",
-      "FileExtension": "pgbackup"
-    },
-    "MsSqlBackupSettings": {
-    }
-  },
-  "EmailSettings": {
-    "Enabled": true,
-    "Host": "smtp.office365.com",
-    "Port": 587,
-    "Timeout": 5000,
-    "EnableSsl": true,
-    "NetworkCredential": {
-      "Email": "iso_dms.mail@indrivo.com",
-      "Password": "I50_dm5.M@!1"
-    }
-  },
-  "Sentry": {
-    "Dsn": "https://a898fb5130514f2485704835f8109591@sentry.io/1547729",
-    "IncludeRequestPayload": true,
-    "SendDefaultPii": true,
-    "MinimumBreadcrumbLevel": "Debug",
-    "MinimumEventLevel": "Warning",
-    "AttachStackTrace": true,
-    "Debug": true,
-    "DiagnosticsLevel": "Error"
-  }
+);
+```
+
+Please note that your reducer must have the **HYDRATE** action handler. **HYDRATE** action handler must properly reconciliate the hydrated state on top of the existing state (if any).
+
+_Read more: [[Official documentation and detailed usage of next-redux-wrapper]][next-redux-wrapper-docs]_
+
+## Routing
+
+This project has a preconfigured private/annonymous routing system. It makes use of the Next.js middleware api.
+
+To register a route, add a property in the **IApplicationRoutes** interface like so:
+
+```tsx
+export interface IApplicationRoutes {
+  MyCustomPage: IApplicationRoute;
 }
 ```
 
-### Explanation of appsettings blocks: 
-- `SystemConfig` - represent a general section that provide some global info:
-    - MachineIdentifier - is used for identify the app id, if is installed multiple GEAR apps, after app installation it is ovverided by generated string
-- `ConnectionStrings` - represent databases providers configuration
-    - Provider - default is postgres
-        - Npgsql.EntityFrameworkCore.PostgreSQL - postgres ,enabled and default
-        - Microsoft.EntityFrameworkCore.SqlServer - enabled
-        - Microsoft.EntityFrameworkCore.Sqlite - for the future
-        - Microsoft.EntityFrameworkCore.InMemory - for the future
-        - Microsoft.EntityFrameworkCore.Cosmos - for the future
-        - Pomelo.EntityFrameworkCore.MySql - for the future
-        - Pomelo.EntityFrameworkCore.MyCat - for the future
-        - EntityFrameworkCore.SqlServerCompact40 - for the future
-        - EntityFrameworkCore.SqlServerCompact35 - for the future
-        - EntityFrameworkCore.Jet - for the future
-        - MySql.Data.EntityFrameworkCore - for the future
-        - FirebirdSql.EntityFrameworkCore.Firebird - for the future
-        - EntityFrameworkCore.FirebirdSql - for the future
-        - IBM.EntityFrameworkCore - for the future
-        - EntityFrameworkCore.OpenEdge - for the future
-- [Logging] - see microsoft docs
-- `LocalizationConfig` - language configurations
-- `IsConfigured` - This property determines whether the app has been installed or not, if set to true then the configurations set in the database are taken, otherwise when accessing any page, it will be redirected to the installer
-- `LdapSettings` - This involves configuring the AD mode
-- `RedisConnection` - configurations for distributed cache
-    - Host - represent the ip address of redis connection
-    - Port - represent the port where is bind redis service, default: 6379
-- `BackupSettings` - this section is used for backup module, now is developed only for postgres provider
-- `EmailSettings` - this section is used for email client
-    - Enabled - set active or inactivity of service
-    - Host - the smptp host
-    - Port - the port of smtp
-    - Timeout - represents the time allowed for the service to wait for the message to be successfully sent
-    - EnableSsl - represent usage of smtp with ssl
-    - NetworkCredential
-        - Email - existent smtp email
-        - Password - the password of smtp email
-- `Sentry` - consult [sentry documentation](https://docs.sentry.io/platforms/dotnet/aspnetcore/) for .net core 
+Now add the route configuration in the **routes** object:
 
-## App run
-To start the app, you need:
-1. Restore ui packages on all razor projects (is optional step because, they are restored on build)
-    ```shell
-    libman restore
-    ```
-2. Restore C# nuget packages by typing 
-    ```shell
-    dotnet restore
-    ```
-3. Build. To build, you must navigate the explorer to the path: `./src/GR.WebHosts/GR.Cms` or 
-    ```shell
-    cd ./src/GR.WebHosts/GR.Cms
-    ```
-    after it execute the following command: 
-    ```shell
-    dotnet build
-    ```
-4. If build has run successfully, it is the green wave to start the project
-    ```shell
-    dotnet run 
-    ```
-    `optional` for change exposed port 
-    ```shell
-    dotnet run --urls=http://localhost:5001/ 
-    ```
+```tsx
+export const routes: IApplicationRoutes = {
+  MyCustomPage: {
+    path: "/",
+    authorized: true, // Marks the route as authorized. Only a logged user can access this page
+  },
+};
+```
 
-## Install steps
-`Note`: Be sure that in appsettings{Env}.json, the IsConfigured property is set to false
-1. Start the application
-You will be met by the following message describing the platform
-![Welcome board](https://i.ibb.co/5GWdW6N/welcome-gear.png)
-Click on `Go to installation`
+You can also mark the route as an **annonymous** one with **annonymous: true**. This will prevent logged users to access the route.
 
-2. Configure admin profile
-![Profile tab](https://i.ibb.co/nQw9kHK/profile-gear.png)
-Settings:
-- `User Name` - adminstrator user name
-- `Email` - your email address to receive emails on system events
-- `Password` and `Confirm Password` - the administrator password
-- `First Name` - admin first name
-- `Last Name` - admin last name
-- `Organization Name` - represent the default organization name
-3. Set up database provider
-![Configuration of database provider](https://i.ibb.co/hMnP7y6/db-gear.png)
-`Note`: Use postgres default, because MsSql has not been tested for a long time, we plan support for other providers
-`Connection String example`: Host=127.0.0.1;Port=5432;Username=postgres;Password=Gear2020;Persist Security Info=true;Database=Gear.PROD;MaxPoolSize=1000;
-4. Press `Install` button and wait until the system is installed
+## Layouts
 
-# Modules
-The framework has developed the following modules:
-- Module for managing dynamic entities
-- Workflow manager and builder module 
-- Task Management Module
-- Calendar module
-- Synchronization component with external calendar
-- Notifications module
-- Document Management Module (DMS)
-- User Management Module
-- Role and permissions management module
-- Report and Statistics Module
-- The chat module
-- Content management module
-- Page Management module
-- Forms management module
-- Menu management module
-- The localization module
-- Authentication and authorization module
+Each page component created under the **pages** folder uses the default layout component, preconfigured in the **\_app.tsx** file. To use a custom layout for a Next.js page, you can specify the layout explicitly by setting the layout property (please note that the page component must have the custom **NextPageWithLayout** type):
 
- [.net Core SDK 2.2.402]: <https://dotnet.microsoft.com/download/dotnet-core/2.2>
- [Redis]: <https://github.com/MicrosoftArchive/redis/releases/download/win-3.2.100/Redis-x64-3.2.100.msi>
- [Pg Admin 4]: <https://www.pgadmin.org/download/pgadmin-4-windows/>
- [PostgreSql]: <https://www.enterprisedb.com/downloads/postgres-postgresql-downloads>
- [Libman]: <https://docs.microsoft.com/en-us/aspnet/core/client-side/libman/libman-cli?view=aspnetcore-3.1>
- [Logging]: <https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-3.1>
+```tsx
+import { NextPageWithLayout } from "~/core";
+import { AuthForm } from "~/components";
+import { AuthLayout } from "~/layouts";
+
+const Login: NextPageWithLayout = () => {
+  return <AuthForm type="login" />;
+};
+
+Login.layout = AuthLayout;
+
+export default Login;
+```
+
+[adding-custom-environment-variables]: https://pankod.github.io/superplate/docs/nextjs/env
+[i18next-documentation]: https://github.com/isaachinman/next-i18next
+[next-redux-wrapper-docs]: https://github.com/kirill-konshin/next-redux-wrapper

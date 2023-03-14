@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ThemeProvider component renders with dark preffered color scheme 1`] = `<DocumentFragment />`;
+
+exports[`ThemeProvider component renders with local storage value 1`] = `<DocumentFragment />`;
+
+exports[`ThemeProvider component renders without crashing 1`] = `<DocumentFragment />`;
