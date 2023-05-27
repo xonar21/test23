@@ -1,18 +1,15 @@
-import { ILocation } from "~/models";
+import { Permission } from "~/security";
 
 export interface IUserPreview {
+  data?: any;
+  claims?: { type: Permission; value: string }[];
   id: string;
-  title: string;
-  firstName: string;
-  lastName: string;
-  picture: string;
+  email: string;
+  userName: string;
+  idnp?: string;
 }
 
-export interface IUser extends IUserPreview {
-  gender: string;
-  email: string;
-  dateOfBirth: string;
-  registerDate: string;
-  phone: string;
-  location: ILocation;
+export interface IUsersPreview {
+  data: any;
+  items?: any;
 }

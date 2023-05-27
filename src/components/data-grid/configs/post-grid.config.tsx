@@ -48,7 +48,7 @@ const columns: () => GridColDef[] = () => {
 
         if (result.succeeded) {
           const pageParam = data.length < 2 ? (page - 1 < 0 ? 0 : page - 1) : page;
-          await dispatch(PostsActions.getList({ page: pageParam, limit }));
+          await dispatch(PostsActions.getList({ page: pageParam, limit } as any));
           enqueueSnackbar(translate("posts:snackbar.deleted"), { variant: "success" });
         } else {
           const { message } = result.payload as IAxiosErrorPayload;
@@ -75,12 +75,8 @@ const columns: () => GridColDef[] = () => {
       field: "owner",
       headerName: translate("posts:table.columns.owner"),
       valueGetter: ({ row }) => {
-        const { firstName, lastName } = row.owner as IUserPreview;
-        return `${firstName} ${lastName}`;
-      },
-      renderCell: params => {
-        const { picture } = params.row.owner as IUserPreview;
-        return <Avatar alt={params.value} src={picture} title={params.value} />;
+        const { userName } = row.owner as IUserPreview;
+        return `${userName}`;
       },
       flex: 0.15,
     },
@@ -100,13 +96,13 @@ const columns: () => GridColDef[] = () => {
           icon={<EditIcon />}
           label={translate("posts:updatePost")}
           onClick={() => initializeUpdateForm(params.row)}
-          disabled={!hasPermission(UserAction.Update, EntityType.Post)}
+          // disabled={!hasPermission(UserAction.Update, EntityType.Post)}
         />,
         <GridActionsCellItem
           icon={<DeleteIcon />}
           label={translate("posts:deletePost")}
           onClick={() => promptDelete(params.row)}
-          disabled={!hasPermission(UserAction.Delete, EntityType.Post)}
+          // disabled={!hasPermission(UserAction.Delete, EntityType.Post)}
         />,
       ],
     },

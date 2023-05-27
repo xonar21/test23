@@ -8,6 +8,10 @@ export const LocalStorageKeys = {
 
 export const CookieKeys = {
   AuthToken: "AUTH_TOKEN",
+  AuthRefreshToken: "AUTH_REFRESH_TOKEN",
+  SaiseToken: "SAISE.Token",
+  ExternalUserIdnp: "EXTERNAL_USER_IDNP",
+  ExternalUserEmail: "EXTERNAL_USER_EMAIL",
 };
 
 export const QueryKeys = {

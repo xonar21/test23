@@ -1,14 +1,14 @@
 import { render, fireEvent, testIds, Locale } from "~/shared";
-import { AppHeader } from "~/components";
+import { Header } from "~/components";
 
 describe("Header component", () => {
   it("should render without crashing", () => {
-    const { asFragment } = render(<AppHeader />);
+    const { asFragment } = render(<Header />);
     expect(asFragment()).toMatchSnapshot();
   });
 
   it("should toggle drawer", () => {
-    const { getByTestId } = render(<AppHeader />);
+    const { getByTestId } = render(<Header />);
     const button = getByTestId(testIds.components.header.buttons.drawerToggler);
     const drawer = getByTestId(testIds.components.navigationDrawer.root);
     fireEvent.click(button);
@@ -18,13 +18,13 @@ describe("Header component", () => {
   });
 
   it("should handle redirect on navigation link click", () => {
-    const { getAllByTestId } = render(<AppHeader />);
+    const { getAllByTestId } = render(<Header />);
     const link = getAllByTestId(testIds.components.navigationDrawer.navigationLink)[0];
     fireEvent.click(link);
   });
 
   it("should change locale without crashing", () => {
-    const { getByTestId, getAllByTestId } = render(<AppHeader />);
+    const { getByTestId, getAllByTestId } = render(<Header />);
 
     const localeMenu = getByTestId(testIds.components.header.buttons.localeMenu);
 

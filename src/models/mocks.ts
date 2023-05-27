@@ -1,6 +1,6 @@
-import { IAuthModel, ILocation, IPageRequest, IPost, IPostCreate, IPostPreview, IUser, IUserPreview } from "~/models";
+import { IAuthModel, ILocation, IPageRequest, IPost, IPostCreate, IPostPreview, IUserPreview } from "~/models";
 
-const authModel: IAuthModel = { email: "johndoe@domain.com", password: "Pa$$w0rd" };
+const authModel: IAuthModel = { userName: "johndoe@domain.com", password: "Pa$$w0rd" };
 
 const location: ILocation = {
   city: "New York",
@@ -10,7 +10,7 @@ const location: ILocation = {
   timezone: "UTC",
 };
 
-const pageRequest: IPageRequest = { page: 0, limit: 10 };
+const pageRequest = { page: 0, limit: 10 };
 
 const postCreate: IPostCreate = {
   image: "https://client.mock/img/1.jpg",
@@ -34,20 +34,8 @@ const post: IPost = {
 
 const userPreview: IUserPreview = {
   id: "1",
-  title: "mr",
-  firstName: "John",
-  lastName: "Doe",
-  picture: "https://client.mock/img/1.jpg",
-};
-
-const user: IUser = {
-  ...userPreview,
-  gender: "M",
-  email: "johndoe@domain.com",
-  dateOfBirth: "1990-05-05",
-  registerDate: "2020-03-03",
-  phone: "+123456789",
-  location: location,
+  email: "admin@mail.ru",
+  userName: "Admin",
 };
 
 export default {
@@ -58,5 +46,4 @@ export default {
   postPreview,
   post,
   userPreview,
-  user,
 };

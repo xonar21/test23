@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { webApi } from "~/api";
 import { IAxiosErrorPayload, Nullable, NullablePartial } from "~/core";
-import { IAuthError, IAuthModel, IAuthResponse } from "~/models";
+import { IAuthError, IAuthModel, IAuthResponse, IMpassModel, IRefreshModel, ISaiseModel } from "~/models";
 import { apiCall } from "~/store";
 
 const name = "AUTH";
@@ -10,14 +10,22 @@ interface IAuthSliceState {
   loading: boolean;
   isAuthenticated: boolean;
   token: Nullable<string>;
+  refreshToken: Nullable<string>;
+  SaiseToken: Nullable<string>;
+  fullName: Nullable<string>;
   error: Nullable<IAxiosErrorPayload<IAuthError>>;
+  timeToRefresh: number;
 }
 
 export const authSliceInitialState: IAuthSliceState = {
   loading: false,
   isAuthenticated: false,
   token: null,
+  refreshToken: null,
+  fullName: null,
   error: null,
+  SaiseToken: null,
+  timeToRefresh: 0,
 };
 
 enum ActionType {
@@ -26,6 +34,7 @@ enum ActionType {
   AUTH_REQUEST_FAILED = "AUTH_REQUEST_FAILED",
   AUTH_REQUEST_ENDED = "AUTH_REQUEST_ENDED",
   AUTH_STATE_CHANGED = "AUTH_STATE_CHANGED",
+  TIME_REFRESH_SET = "TIME_REFRESH_SET",
 }
 
 const slice = createSlice({
@@ -36,9 +45,16 @@ const slice = createSlice({
       state.loading = true;
     },
     [ActionType.AUTH_REQUEST_SUCCEEDED]: (state, action: PayloadAction<IAuthResponse>) => {
-      state.token = action.payload.token;
-      state.isAuthenticated = true;
-      state.error = null;
+      if (!action.payload) {
+        return;
+      }
+      const { token, refreshToken } = action.payload;
+      if (token && refreshToken) {
+        state.token = token;
+        state.refreshToken = refreshToken;
+        state.isAuthenticated = true;
+        state.error = null;
+      }
     },
     [ActionType.AUTH_REQUEST_FAILED]: (state, action: PayloadAction<IAxiosErrorPayload<IAuthError>>) => {
       state.error = action.payload;
@@ -47,9 +63,16 @@ const slice = createSlice({
       state.loading = false;
     },
     [ActionType.AUTH_STATE_CHANGED]: (state, action: PayloadAction<NullablePartial<IAuthResponse>>) => {
-      const { token } = action.payload;
+      const { token, SaiseToken, refreshToken } = action.payload;
+      state.SaiseToken = SaiseToken as string;
       state.token = token;
-      state.isAuthenticated = !!token;
+      state.refreshToken = refreshToken;
+      state.fullName = token ? "John Doe" : null;
+      state.isAuthenticated = token ? true : false;
+    },
+    [ActionType.TIME_REFRESH_SET]: (state, action) => {
+      const { interDate } = action.payload;
+      state.timeToRefresh = interDate;
     },
   },
 });
@@ -70,6 +93,34 @@ const login = (model: IAuthModel) => {
   });
 };
 
+const refresh = (model: IRefreshModel) => {
+  return apiCall(webApi.Auth.refreshToken)({
+    args: [model],
+    ...actions,
+  });
+};
+
+const invalidate = (model: IRefreshModel) => {
+  return apiCall(webApi.Auth.invalidToken)({
+    args: [model],
+    ...actions,
+  });
+};
+
+const loginMpass = (model: IMpassModel) => {
+  return apiCall(webApi.Auth.loginMpass)({
+    args: [model],
+    ...actions,
+  });
+};
+
+const loginSaise = (model: ISaiseModel) => {
+  return apiCall(webApi.Auth.loginSaise)({
+    args: [model],
+    ...actions,
+  });
+};
+
 const register = (model: IAuthModel) => {
   return apiCall(webApi.Auth.register)({
     args: [model],
@@ -81,6 +132,10 @@ export const AuthActions = {
   ...slice.actions,
   login,
   register,
+  loginSaise,
+  loginMpass,
+  refresh,
+  invalidate,
 };
 
 export default slice.reducer;

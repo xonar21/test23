@@ -1,32 +1,38 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import {
-  EntityType,
-  UserAction,
-  UserPermissions,
-  hasPermissions as checkPermissions,
-  getPermissionsFromToken,
-} from "~/security";
-import { AuthSelectors } from "~/store";
+import { Permission } from "~/security";
+import { UserSelectors } from "~/store";
 
 const usePermissions = () => {
-  const { token } = useSelector(AuthSelectors.getRoot);
-  const [permissions, setPermissions] = useState<UserPermissions>({
-    create: [],
-    read: [],
-    update: [],
-    delete: [],
-  });
+  const claims = useSelector(UserSelectors.getClaims);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    setPermissions(getPermissionsFromToken(token));
-  }, [token]);
+    setPermissions(
+      claims.map(c => {
+        return c.type;
+      }),
+    );
+  }, [claims]);
 
-  const hasPermission = (action: UserAction, entity: EntityType) => permissions[action].includes(entity);
+  useEffect(() => {
+    if (claims.length) {
+      setLoading(false);
+    }
+  }, [permissions]);
 
-  const hasPermissions = (_permissions: Partial<UserPermissions>) => checkPermissions(_permissions, permissions);
-
-  return { hasPermission, hasPermissions };
+  const hasPermission = (permission: Permission) => {
+    if (permissions.length) {
+      return permissions.includes(permission);
+    }
+  };
+  const hasPermissions = (_permissions: Permission[]) => {
+    return _permissions.every(p => {
+      return permissions.includes(p);
+    });
+  };
+  return { hasPermission, hasPermissions, loading };
 };
 
 export default usePermissions;

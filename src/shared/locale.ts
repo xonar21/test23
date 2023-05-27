@@ -3,7 +3,6 @@ import { i18n } from "next-i18next";
 export enum Locale {
   Romanian = "ro",
   Russian = "ru",
-  English = "en",
 }
 
 export const translate = (key: string | string[]) => {

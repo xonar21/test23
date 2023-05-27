@@ -38,7 +38,7 @@ const Posts: NextPage = () => {
         variant="contained"
         size="small"
         onClick={handleOpenModal}
-        disabled={!hasPermission(UserAction.Create, EntityType.Post)}
+        // disabled={!hasPermission(UserAction.Create, EntityType.Post)}
         sx={{ mb: 2 }}
       >
         {t("posts:createPost")}
@@ -57,8 +57,8 @@ const Posts: NextPage = () => {
 export const getServerSideProps: GetServerSideProps = reduxWrapper.getServerSideProps(
   ({ dispatch }) =>
     async ({ locale }) => {
-      await dispatch(PostsActions.getList({ page: 0, limit: 10 }));
-      await dispatch(SelectListsActions.getUsersSelectList());
+      await dispatch(PostsActions.getList({ page: 0, limit: 10 } as any));
+      // await dispatch(SelectListsActions.getUsersSelectList());
       await dispatch(TagsActions.getTags());
 
       return {

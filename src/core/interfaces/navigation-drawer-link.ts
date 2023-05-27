@@ -4,5 +4,7 @@ import { IApplicationRoute } from "~/shared";
 export interface INavigationDrawerLink {
   icon: React.ElementType;
   title: string;
-  route: IApplicationRoute;
+  route?: IApplicationRoute;
+  children?: INavigationDrawerLink[];
+  display?: boolean;
 }

@@ -1,0 +1,33 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  registry: dotnetteam/cec/esl/cec_itss_esl_front
+  tag: latest
+  name: cec-itss-esl
+  project_name: dotnet-dev-cec-itss-esl
+  ip: 192.168.1.43
+  port: 8191
+  storage_size: 5Gi
+  cpu_size: 50m
+  ram_size: 250Mi
+
+build:
+  stage: build
+  script:
+    - cat "$DEV_VARIABLES" > .env
+    - docker login gitlab.dev.indrivo.com:5005 -u vlad.polevoi -p $GITLAB_REGISTRY_TOKEN
+    - docker build -t gitlab.dev.indrivo.com:5005/$registry -f deploy/Dockerfile .
+    - docker push gitlab.dev.indrivo.com:5005/$registry
+  only:
+    - develop
+
+deploy:
+  stage: deploy
+  image: gitlab.dev.indrivo.com:5005/php-team/php-base-image:kubectl
+  script:
+    - kubectl delete all,ing -l app=$project_name -n development
+    - ansible-playbook deploy/playbook.yml --extra-vars "image_id=gitlab.dev.indrivo.com:5005/$registry:$tag name=$name project_name=$project_name ip=$ip port=$port size=$storage_size cpu=$cpu_size ram=$ram_size"
+  only:
+    - develop

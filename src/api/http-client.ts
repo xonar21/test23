@@ -23,6 +23,8 @@ export default abstract class HttpClient {
   protected readonly patch = (url: string, body?: object, config?: AxiosRequestConfig) =>
     this.instance.patch(url, body, config).then(this.responseBody);
 
-  protected readonly delete = (url: string, config?: AxiosRequestConfig) =>
-    this.instance.delete(url, config).then(this.responseBody);
+  // protected readonly delete = (url: string, body?: object, config?: AxiosRequestConfig) =>
+  //   this.instance.delete(url, body, config).then(this.responseBody);
+  protected readonly delete = (url: string, body?: object, config?: AxiosRequestConfig) =>
+    this.instance.delete(url, { ...config, data: body }).then(this.responseBody);
 }

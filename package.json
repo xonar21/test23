@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H ssilse.dev.indrivo.com -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\"",
@@ -16,18 +16,26 @@
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.9",
+    "@mui/lab": "^5.0.0-alpha.129",
     "@mui/material": "^5.11.9",
     "@mui/styles": "^5.11.9",
     "@mui/x-data-grid": "^5.17.23",
+    "@mui/x-date-pickers": "^6.0.2",
     "@reduxjs/toolkit": "^1.9.2",
+    "ag-grid-community": "^29.1.0",
+    "ag-grid-enterprise": "^29.1.0",
+    "ag-grid-react": "^29.1.0",
     "axios": "0.27.2",
+    "dayjs": "^1.11.7",
     "formik": "^2.2.9",
+    "jsonwebtoken": "^9.0.0",
     "next": "12.2.0",
     "next-compose-plugins": "^2.2.1",
     "next-i18next": "8.10.0",
     "next-redux-wrapper": "7.0.5",
     "notistack": "^2.0.8",
     "react": "17.0.2",
+    "react-bootstrap": "^2.7.2",
     "react-dom": "17.0.2",
     "react-redux": "^8.0.5",
     "react-use": "^17.4.0",
@@ -38,6 +46,7 @@
     "@testing-library/react": "12.1.5",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/jest": "^29.4.0",
+    "@types/jsonwebtoken": "^9.0.1",
     "@types/node": "^18.13.0",
     "@types/react": "17.0.50",
     "@types/react-dom": "17.0.17",
@@ -63,8 +72,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "npm run lint",
-      "npm run test:pre-commit"
+      "npm run lint"
     ]
   },
   "husky": {

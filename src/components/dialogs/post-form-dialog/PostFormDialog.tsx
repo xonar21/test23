@@ -18,7 +18,7 @@ const PostFormDialog = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { submitting, form, limit, page } = useSelector(PostsSelectors.getRoot);
   const { tags } = useSelector(TagsSelectors.getRoot);
-  const usersSelectList = useSelector(SelectListsSelectors.getUsersSelectList);
+  const usersSelectList = useSelector(SelectListsSelectors.getRoot);
   const yup = useYup({
     translationNamespace: "posts",
     translationPath: "table.columns",
@@ -41,7 +41,7 @@ const PostFormDialog = () => {
     const result = await dispatch(action(model as IPostCreate & IPost));
 
     if (result.succeeded) {
-      dispatch(PostsActions.getList({ page: values.id ? page : 0, limit }));
+      dispatch(PostsActions.getList({ page: values.id ? page : 0, limit } as any));
       enqueueSnackbar(t("snackbar.saved"), { variant: "success" });
       closeDialog();
       dispatch(PostsActions.FORM_RESET());
@@ -61,16 +61,16 @@ const PostFormDialog = () => {
                 <FormikTextField name="text" label={t("table.columns.text")} rows={4} multiline fullWidth required />
               </Grid>
               <Grid item xs={6}>
-                <FormikAutocomplete
+                {/* <FormikAutocomplete
                   name="owner"
                   label={t("table.columns.owner")}
                   options={usersSelectList}
-                  getOptionLabel={user => `${user.firstName} ${user.lastName}`}
+                  getOptionLabel={user => `${user}`}
                   disabled={!!values.id}
                   data-testid={testIds.components.dialogs.postFormDialog.owner}
                   fullWidth
                   required
-                />
+                /> */}
               </Grid>
               <Grid item xs={6}>
                 <FormikAutocomplete
@@ -86,7 +86,9 @@ const PostFormDialog = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeDialog}>{t("common:close")}</Button>
+            <Button variant="outlined" onClick={closeDialog}>
+              {t("common:close")}
+            </Button>
             <LoadingButton
               type="submit"
               variant="contained"

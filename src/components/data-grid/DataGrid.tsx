@@ -28,7 +28,7 @@ const DataGrid: React.FC<IDataGridProps<any>> = ({
       let active = true;
 
       (async () => {
-        await dispatch(getList({ page, limit }));
+        await dispatch(getList({ page, limit } as any));
         if (!active) return;
         setTimeout(() => {
           dispatch(SELECTED_ROWS_CHANGED(prevSelectedRows.current));

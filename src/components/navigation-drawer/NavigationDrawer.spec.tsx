@@ -3,8 +3,7 @@ import { NavigationDrawer } from "~/components";
 
 describe("NavigationDrawer component", () => {
   it("should render without crashing", () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { asFragment } = render(<NavigationDrawer links={undefined as any} />);
+    const { asFragment } = render(<NavigationDrawer links={[]} setOpen={jest.fn()} />);
     expect(asFragment()).toMatchSnapshot();
   });
 });

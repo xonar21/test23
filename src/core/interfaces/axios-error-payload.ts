@@ -5,4 +5,6 @@ export interface IAxiosErrorPayload<T = unknown> {
   status?: HttpStatusCode;
   statusText?: string;
   data?: T;
+  items?: any;
+  totalCount?: number;
 }

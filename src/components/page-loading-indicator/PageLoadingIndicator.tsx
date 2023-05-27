@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Router } from "next/router";
 import { Box, LinearProgress } from "@mui/material";
+import { useCookie } from "react-use";
+import { CookieKeys } from "~/shared";
 
 const PageLoadingIndicator: React.FC = ({ children }) => {
   const [loading, setLoading] = useState(false);
+  const [token] = useCookie(CookieKeys.AuthToken);
 
   useEffect(() => {
     Router.events.on("routeChangeStart", handleStart);
@@ -32,11 +35,13 @@ const PageLoadingIndicator: React.FC = ({ children }) => {
           position: "absolute",
           width: "100%",
           transition: ".2s linear",
+          top: ({ spacing }) => spacing(10),
           zIndex: theme => theme.zIndex.appBar + 1,
           opacity: loading ? 1 : 0,
+          display: !token ? "none" : "block",
         }}
       >
-        <LinearProgress variant="indeterminate" />
+        <LinearProgress variant="indeterminate" sx={{ height: 2 }} />
       </Box>
       {children}
     </React.Fragment>

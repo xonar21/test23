@@ -12,8 +12,12 @@ interface IBreadcrumb extends IApplicationRoute {
 
 const useStyles = makeStyles((theme: Theme) => ({
   root: {
-    margin: theme.spacing(1, 0),
+    margin: theme.spacing(1.25, 0),
+    color: theme.palette.primary.main,
     ...theme.typography.subtitle2,
+    "& .MuiBreadcrumbs-separator": {
+      margin: theme.spacing(0, 0.625),
+    },
   },
 }));
 
@@ -22,6 +26,13 @@ const Breadcrumbs: React.FC = () => {
   const { t } = useTranslation();
   const { pathname } = useRouter();
   const [breadcrumbs, setBreadcrumbs] = useState<IBreadcrumb[]>([]);
+
+  const lowerCaseFirstLetter = (str: string): string => {
+    if (str.length === 0) {
+      return str;
+    }
+    return str.charAt(0).toLowerCase() + str.slice(1);
+  };
 
   useEffect(() => {
     const values: IBreadcrumb[] = Object.keys(routes)
@@ -38,8 +49,9 @@ const Breadcrumbs: React.FC = () => {
     <MuiBreadcrumbs className={classes.root} aria-label="breadcrumbs">
       {breadcrumbs.map((breadcrumb: IBreadcrumb, index) =>
         index === breadcrumbs.length - 1 ? (
-          <Typography key={index} variant="body2" color="text.primary">
-            {t(`routes.${breadcrumb.key.toLowerCase()}`)}
+          <Typography key={index} variant="subtitle2" fontWeight="bold">
+            {t(`routes.${lowerCaseFirstLetter(breadcrumb.key)}`)}
+            {console.log(breadcrumb.key, t(`routes.${lowerCaseFirstLetter(breadcrumb.key)}`))}
           </Typography>
         ) : (
           <NextLink key={index} href={breadcrumb.path} passHref>

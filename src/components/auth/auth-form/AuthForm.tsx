@@ -1,19 +1,17 @@
 import React, { useState } from "react";
-import NextLink from "next/link";
-import { Box, CardActions, CardContent, Link, Typography } from "@mui/material";
+import { Box, CardActions, CardContent, Typography } from "@mui/material";
 import { useTranslation } from "next-i18next";
 import { Form, Formik } from "formik";
 import { useDispatch, useSelector } from "react-redux";
-import { useSnackbar } from "notistack";
-import { useRouter } from "next/router";
-import { AuthActionType, IAuthError, IAuthModel, IAuthResponse } from "~/models";
-import { AuthActions, AuthSelectors } from "~/store";
-import { IAxiosErrorPayload } from "~/core";
-import { CookieKeys, getRoutePath, QueryKeys, routes, testIds } from "~/shared";
+import { AuthActionType, IMpassModel, IMpassResponse } from "~/models";
+import { AuthActions, AuthSelectors, UserActions } from "~/store";
+import { CookieKeys, getRoutePath, routes, testIds } from "~/shared";
 import { useCookie } from "react-use";
 import { LoadingButton } from "~/components";
 import { useYup } from "~/hooks";
 import { FormikTextField } from "~/components/formik";
+import ReactDOM from "react-dom";
+import SuccessModal from "~/components/successModal";
 
 interface IAuthFormProps {
   type: AuthActionType;
@@ -22,14 +20,22 @@ interface IAuthFormProps {
 const AuthForm: React.FC<IAuthFormProps> = ({ type }) => {
   const dispatch = useDispatch();
   const [, updateAuthCookie] = useCookie(CookieKeys.AuthToken);
-  const { query } = useRouter();
+  const [, updateRefreshToken] = useCookie(CookieKeys.AuthRefreshToken);
+  const [, updateIdnp] = useCookie(CookieKeys.ExternalUserIdnp);
+  const [, updateEmail] = useCookie(CookieKeys.ExternalUserEmail);
   const { t } = useTranslation();
-  const { enqueueSnackbar } = useSnackbar();
   const { loading } = useSelector(AuthSelectors.getRoot);
   const [redirecting, setRedirecting] = useState(false);
-  const [model] = useState<IAuthModel>({
-    email: "george.bluth@reqres.in",
-    password: "Pa$$w0rd",
+  const [model] = useState<IMpassModel>({
+    requestId: "123456",
+    idnp: "",
+    firstName: "jen",
+    nameIdentifier: "test23",
+    lastName: "done",
+    phoneNumber: "11122233",
+    email: "",
+    gender: "male",
+    birthDate: "2000-03-29T14:20:51.863Z",
   });
   const yup = useYup({
     translationNamespace: "common",
@@ -37,22 +43,51 @@ const AuthForm: React.FC<IAuthFormProps> = ({ type }) => {
   });
 
   const validationSchema = yup.object({
+    idnp: yup.string().required().min(13),
     email: yup.string().required().email(),
-    password: yup.string().required().min(6),
   });
 
-  const handleSubmit = async (values: IAuthModel) => {
-    const result = await dispatch(AuthActions[type](values));
+  const extractToken = (url: string) => {
+    const matchToken = url.match(/token=([^&]*)/);
+    const token = matchToken ? matchToken[1] : "";
 
-    if (result.succeeded) {
-      const { token } = result.payload as IAuthResponse;
-      updateAuthCookie(token);
-      window.location.href = (query[QueryKeys.ReturnUrl] as string) || getRoutePath(routes.Home);
+    return token;
+  };
+
+  const extractRefreshToken = (url: string) => {
+    const matchRefreshToken = url.match(/refreshToken=([^&]*)/);
+    const refreshToken = matchRefreshToken ? matchRefreshToken[1] : "";
+
+    return refreshToken;
+  };
+
+  const showSuccessModal = (title: string, message: string) => {
+    const successModal = document.createElement("div");
+    document.body.appendChild(successModal);
+
+    ReactDOM.render(React.createElement(SuccessModal, { title, message }), successModal);
+  };
+
+  const handleSubmit = async (values: IMpassModel) => {
+    const result = await dispatch(AuthActions.loginMpass(values));
+    const { statusCode, url } = result.payload as IMpassResponse;
+    if (statusCode) {
+      return;
+    }
+
+    if (url) {
+      updateAuthCookie(extractToken(url));
+      updateRefreshToken(extractRefreshToken(url));
+      const action: any = { token: extractToken(url), refreshToken: extractRefreshToken(url) };
+
+      updateIdnp(values.idnp);
+      updateEmail(values.email);
+      await dispatch(AuthActions.AUTH_REQUEST_SUCCEEDED(action));
+      await dispatch(UserActions.getCurrentUser());
+      showSuccessModal("Succes", "Înregistrare finalizată cu succes");
+
+      window.location.href = getRoutePath(routes.Home);
       setRedirecting(true);
-      enqueueSnackbar(t("auth.successfulLogin"), { variant: "success" });
-    } else {
-      const { data } = result.payload as IAxiosErrorPayload<IAuthError>;
-      enqueueSnackbar(data?.error, { variant: "error" });
     }
   };
 
@@ -67,8 +102,8 @@ const AuthForm: React.FC<IAuthFormProps> = ({ type }) => {
               </Typography>
               <Box mb={3}>
                 <FormikTextField
-                  name="email"
-                  label={t("auth.email")}
+                  name="idnp"
+                  label="Idnp"
                   data-testid={testIds.components.authForm.email}
                   fullWidth
                   required
@@ -76,9 +111,9 @@ const AuthForm: React.FC<IAuthFormProps> = ({ type }) => {
               </Box>
               <Box>
                 <FormikTextField
-                  name="password"
-                  type="password"
-                  label={t("auth.password")}
+                  name="email"
+                  type="email"
+                  label={t("auth.email")}
                   data-testid={testIds.components.authForm.password}
                   fullWidth
                   required
@@ -97,11 +132,6 @@ const AuthForm: React.FC<IAuthFormProps> = ({ type }) => {
               >
                 {t(`auth.${type}`)}
               </LoadingButton>
-              <NextLink href={getRoutePath(type === "login" ? routes.Register : routes.Login)} passHref>
-                <Link underline="hover" variant="body2" color={({ palette }) => palette.text.primary}>
-                  {t(`auth.redirectFrom.${type}`)}
-                </Link>
-              </NextLink>
             </CardActions>
           </Form>
         )}

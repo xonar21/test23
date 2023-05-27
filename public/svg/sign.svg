@@ -1,0 +1,4 @@
+<svg id="create" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <rect id="Path" width="20" height="20" fill="rgba(0,0,0,0)"/>
+  <path id="Icon" d="M2.916,14H0V11.082l8.6-8.6L11.517,5.4,2.916,14ZM8.6,4.681h0L1.555,11.727v.716h.715L9.316,5.4,8.6,4.681Zm3.748-.116h0L9.433,1.648,10.856.225a.78.78,0,0,1,1.1,0l1.82,1.82a.774.774,0,0,1,0,1.1L12.35,4.564Z" transform="translate(3 3.001)" fill="#55b7d5"/>
+</svg>
