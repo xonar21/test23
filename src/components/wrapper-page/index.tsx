@@ -13,9 +13,7 @@ import {
   FormLabel,
   Radio,
   RadioGroup,
-  Autocomplete,
-  CircularProgress,
-  styled,
+  FormHelperText,
 } from "@mui/material";
 import { ColDef } from "ag-grid-community";
 import AgGridTable from "~/pageList/components/AgGrid/AgGridTable";
@@ -38,15 +36,24 @@ import { usePermissionRedirect } from "~/hooks";
 import { Permission } from "~/security";
 import dayjs from "dayjs";
 import { useRouter } from "next/router";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+// import { DatePicker, DateValidationError, LocalizationProvider } from "@mui/x-date-pickers";
+// import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { IResponse } from "~/models";
 import customTooltip from "~/components/customTooltip";
 import "dayjs/locale/ro";
 import SuccessModal from "../successModal";
 import ReactDOM from "react-dom";
-import { SelectListAction, SelectListSelector, SelectListsActions, SelectListsSelectors } from "~/store";
+import { SelectListsSelectors } from "~/store";
 import AutocompleteField from "../AutocompleteField";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateValidationError } from "@mui/x-date-pickers/models";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface UniversalTableProps<GetType = any, PostType = any> {
   getData?: (paramsPayload?: object) => IActionResult<IResponse<GetType> | IAxiosErrorPayload<unknown>>;
@@ -87,6 +94,9 @@ interface UniversalTableProps<GetType = any, PostType = any> {
         action?: string;
         parent?: string;
         keySelect?: string;
+        required?: boolean;
+        disabled?: boolean;
+        default?: any;
       }
     >;
   };
@@ -170,20 +180,23 @@ const UniversalTable = <GetType, PostType>({
   const defaultContainerStyle = useMemo(() => styles.defaultStylesContainer, []);
   const [value, setValue] = useState<any>({});
   const appliedContainerStyle = containerStyle ?? defaultContainerStyle;
-  const [clickRowData, setClickRowData] = useState<Partial<GetType & { id: string; idnp: string }>>({});
+  const [clickRowData, setClickRowData]: any = useState<Partial<GetType & { id: string; idnp: string }>>({});
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [dinamicTitle, setDinamicTitle] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingBtn, setLoadingBtn] = useState(false);
+  const [errors, setErrors] = useState<any>({});
+  const [touched, setTouched] = useState<any>(false);
   const selectList = useSelector(SelectListsSelectors.getRoot);
-  const { replace } = useRouter();
+  const router = useRouter();
   const columnDefsFromConfig = useMemo(() => {
     return Object.values(tableConfig.tableHeaders).map(header =>
       header.colName === "isAction" && isAction
         ? {
             field: "action",
             headerName: t("action"),
-            width: 76,
+            width: router.locale === "ro" ? 76 : 100,
             pinned: pinnedAction,
             suppressMenu: true,
             cellRenderer: (params: any) => {
@@ -264,6 +277,35 @@ const UniversalTable = <GetType, PostType>({
     setAnchorEl(null);
   };
 
+  useEffect(() => {
+    if (!touched) return;
+
+    const newErrors: any = {};
+    if (!tableConfig.formFields) {
+      return;
+    }
+    Object.keys(tableConfig.formFields).forEach((fieldKey: any) => {
+      const field = (tableConfig.formFields as Record<string, any>)[fieldKey];
+      if (
+        field.required &&
+        dayjs(value[fieldKey]).format("DD-MM-YYYY") === "Invalid Date" &&
+        field.component === "Date"
+      ) {
+        newErrors[fieldKey] = "Acest câmp este obligatoriu";
+        return;
+      }
+      if (field.required && Array.isArray(value[fieldKey])) {
+        if (value[fieldKey].length === 0) {
+          newErrors[fieldKey] = "Acest câmp este obligatoriu";
+        }
+      }
+      if (field.required && (value[fieldKey] === undefined || value[fieldKey] === "" || value[fieldKey] === null)) {
+        newErrors[fieldKey] = "Acest câmp este obligatoriu";
+      }
+    });
+    setErrors(newErrors);
+  }, [value]);
+
   const handleClickPopover = (event: React.MouseEvent<HTMLElement>, params: { node: any; data: any }) => {
     setAnchorEl(event.currentTarget);
     setClickRowData(params.data);
@@ -273,6 +315,8 @@ const UniversalTable = <GetType, PostType>({
   };
 
   const handleOpenModal = (title: React.SetStateAction<string>) => {
+    setErrors({});
+    setTouched(false);
     setOpenModal(true);
     setDinamicTitle(title);
 
@@ -309,6 +353,45 @@ const UniversalTable = <GetType, PostType>({
   };
 
   const handleSave = async () => {
+    if (!tableConfig.formFields) {
+      return;
+    }
+    setTouched(true);
+
+    let valid = true;
+    const newErrors: any = {};
+
+    Object.keys(tableConfig.formFields).forEach((fieldKey: any) => {
+      const field = (tableConfig.formFields as Record<string, any>)[fieldKey];
+
+      if (
+        field.required &&
+        dayjs(value[fieldKey]).format("DD-MM-YYYY") === "Invalid Date" &&
+        field.component === "Date"
+      ) {
+        valid = false;
+        newErrors[fieldKey] = "Acest câmp este obligatoriu";
+        return;
+      }
+      if (field.required && Array.isArray(value[fieldKey])) {
+        if (value[fieldKey].length === 0) {
+          valid = false;
+          newErrors[fieldKey] = "Acest câmp este obligatoriu";
+        }
+      }
+      if (field.required && (value[fieldKey] === undefined || value[fieldKey] === "" || value[fieldKey] === null)) {
+        valid = false;
+        newErrors[fieldKey] = "Acest câmp este obligatoriu";
+      }
+    });
+
+    setErrors(newErrors);
+    if (!valid && !customDialogContent) {
+      return;
+    }
+
+    setLoadingBtn(true);
+
     if (dinamicTitle === t("add") && postItem) {
       if (customDataSend) {
         setLoading(true);
@@ -321,13 +404,16 @@ const UniversalTable = <GetType, PostType>({
         setTimeout(() => {
           setLoading(false);
         }, 500);
-
+        setLoadingBtn(false);
         return;
       }
-      dispatch(postItem(value)).then(() => {
-        showSuccessModal("Succes", successTextPost ? successTextPost : "Date adăugate cu succes");
+      dispatch(postItem(value)).then((e: any) => {
+        if (e.succeeded) {
+          showSuccessModal("Succes", successTextPost ? successTextPost : "Date adăugate cu succes");
+        }
         handleCloseModal();
       });
+      setLoadingBtn(false);
       return;
     }
     if (putItem) {
@@ -337,6 +423,7 @@ const UniversalTable = <GetType, PostType>({
         }
         handleCloseModal();
       });
+      setLoadingBtn(false);
     }
   };
 
@@ -374,23 +461,25 @@ const UniversalTable = <GetType, PostType>({
   };
 
   const handleDateChange = (date: dayjs.Dayjs | null, fieldName: string, value: any) => {
-    setValue({ ...value, [fieldName]: date });
+    const dateWithAddedHour = dayjs(date).add(2, "hour");
+
+    setValue({ ...value, [fieldName]: dayjs.utc(dateWithAddedHour).tz("Europe/Chisinau") });
   };
 
   const viewRedirect = () => {
-    if (clickRowData.idnp) {
-      replace(`${pathRedirectToView}/${clickRowData.idnp}`);
+    if (clickRowData.idnp && router.pathname.includes(getRoutePath(routes.VoterManagement))) {
+      router.replace(`${pathRedirectToView}/${clickRowData.idnp}`);
       return;
     }
     if (clickRowData.id) {
-      replace(`${pathRedirectToView}/${clickRowData.id}`);
+      router.replace(`${pathRedirectToView}/${clickRowData.id}`);
+      return;
+    }
+    if (clickRowData.subscriptionListId && router.pathname.includes(getRoutePath(routes.Signatures))) {
+      router.replace(`${pathRedirectToView}/${clickRowData.subscriptionListId}`);
       return;
     }
   };
-
-  function isIResponse(obj: any): obj is IResponse<GetType> {
-    return "totalCount" in obj;
-  }
 
   type FilterObject = {
     [key: string]: {
@@ -488,17 +577,23 @@ const UniversalTable = <GetType, PostType>({
     return Object.keys(formFields).map(fieldKey => {
       const field = formFields[fieldKey];
       const fieldValue = value[fieldKey];
+      const error = errors[fieldKey];
       if (field.component === "TextField") {
         return (
           <TextField
+            error={errors[fieldKey] ? true : false}
+            required={field.required}
             key={fieldKey}
             value={fieldValue}
             label={t(`${field.fieldName}`)}
             fullWidth
             sx={{ ...field.style, margin: 0 }}
+            helperText={error ? error : " "}
             margin="normal"
             multiline
-            onChange={e => setValue({ ...value, [fieldKey]: e.target.value })}
+            onChange={e => {
+              setValue({ ...value, [fieldKey]: e.target.value });
+            }}
           />
         );
       }
@@ -516,14 +611,22 @@ const UniversalTable = <GetType, PostType>({
             openModal={openModal}
             selectList={selectList}
             paramsRequest={paramsRequest}
+            error={errors[fieldKey]}
+            helperText={error}
+            required={field.required}
+            isDisabled={field.disabled}
+            defaulted={field.default}
+            // setTouched={setTouched}
           />
         );
       }
       if (field.component === "Select") {
         return (
-          <FormControl fullWidth>
+          <FormControl fullWidth required={field.required} error={errors[fieldKey] ? true : false}>
             <InputLabel id="demo-simple-select-label">{t(`${field.fieldName}`)}</InputLabel>
+
             <Select
+              // error={errors[fieldKey] ? true : false}
               multiple
               value={fieldValue ? fieldValue : []}
               labelId="demo-simple-select-label"
@@ -548,12 +651,13 @@ const UniversalTable = <GetType, PostType>({
                   </MenuItem>
                 ))}
             </Select>
+            <FormHelperText id="my-helper-text">{error ? error : " "}</FormHelperText>
           </FormControl>
         );
       }
       if (field.component === "Radio") {
         return (
-          <FormControl sx={{ marginTop: "0px" }}>
+          <FormControl sx={{ marginTop: "0px" }} required={field.required} error={errors[fieldKey] ? true : false}>
             <FormLabel
               id="demo-controlled-radio-buttons-group"
               sx={{
@@ -636,6 +740,9 @@ const UniversalTable = <GetType, PostType>({
                 label="Nu"
               />
             </RadioGroup>
+            <FormHelperText id="my-helper-text" sx={{ margin: "0px" }}>
+              {error ? error : " "}
+            </FormHelperText>
           </FormControl>
         );
       }
@@ -648,11 +755,26 @@ const UniversalTable = <GetType, PostType>({
               onChange={date => handleDateChange(date, field.keyName, value)}
               label={t(`${field.fieldName}`)}
               format="DD-MM-YYYY"
+              sx={{ ".MuiFormHelperText-root": { height: "19.91px" } }}
+              slotProps={{
+                textField: {
+                  helperText: error ? error : "  ",
+                  required: field.required,
+                  error: errors[fieldKey] ? true : false,
+                },
+              }}
             />
           </LocalizationProvider>
         );
       }
     });
+  };
+
+  const isEmpty = (obj: any) => {
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) return false;
+    }
+    return true;
   };
 
   return (
@@ -687,7 +809,7 @@ const UniversalTable = <GetType, PostType>({
                 display: isView ? "flex" : "none",
                 borderBottom: "1px solid white",
               }}
-              onClick={() => (customDialogContent ? handleOpenModal(t("add")) : viewRedirect())}
+              onClick={() => viewRedirect()}
             >
               <Preview sx={styles.editIcon} />
 
@@ -768,6 +890,8 @@ const UniversalTable = <GetType, PostType>({
         content={<>{renderFormFields(tableConfig.formFields, setValue, value)}</>}
         styledContent={dialogContentStyle}
         loading={loading}
+        loadingBtn={loadingBtn}
+        disabled={isEmpty(errors) ? false : true}
       />
     </>
   );
